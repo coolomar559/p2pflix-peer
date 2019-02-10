@@ -25,3 +25,9 @@ flake8`.
 
 This project uses pytest for testing. To run tests, use `pipenv run pytest`. To write
 tests, put everything needed in the `tests` directory.
+
+## Running
+
+To run the peer program, use `pipenv run ./peer.py <command> <options>`. For help
+documentation, check `pipenv run ./peer.py -- --help` or `pipenv run ./peer.py <command>
+-- --help`
