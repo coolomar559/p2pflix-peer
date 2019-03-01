@@ -1,20 +1,20 @@
-import requests
-import json
 import ipaddress
+import json
 
-def requestFileList(**kwargs):
-    My_ip = str()
+import requests
 
-    for key, value in kwargs.items():
-        if key is 'ip' and ipaddress.ip_address(kwargs['ip']):
+
+def request_file_list(**kwargs):
+    my_ip = str()
+
+    for key, _value in kwargs.items():
+        if key == 'ip' and ipaddress.ip_address(kwargs['ip']):
             print(kwargs['ip'])
-            My_ip = kwargs['ip']
-            
-    if not My_ip:
-        My_ip = "localhost"
-    r = requests.get('http://' + str(My_ip) + ':42069/list_files')
-    rJson = r.json()
+            my_ip = kwargs['ip']
+    if not my_ip:
+        my_ip = "localhost"
+    r = requests.get('http://' + str(my_ip) + ':42069/file_list')
+    r_json = r.json()
     print(r)
     print()
-    print(json.dumps(rJson, indent = 4))
-
+    print(json.dumps(r_json, indent=4))
