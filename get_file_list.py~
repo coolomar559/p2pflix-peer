@@ -1,0 +1,16 @@
+import requests
+import json
+import kwargs
+
+def requestFileList(**kwargs):
+    My_ip = str()
+    if args[0]:
+        My_ip = ip[0]
+    else:
+        My_ip = "localhost"
+    r = requests.get('http://' + str(My_ip) + ':42069/file/2')
+    rJson = r.json()
+    print(r)
+    print()
+    print(json.dumps(rJson, indent = 4))
+
