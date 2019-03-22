@@ -1,6 +1,7 @@
 import hashlib
 import ipaddress
 import json
+import os
 import socket
 import time
 
@@ -45,6 +46,10 @@ def request_file_from_peer(file_id):
     chunk_counter = 0
     peer_counter = 0
     num_of_available_peers_for_file = len(file_details_json['peers'])
+    if os.path.exists(file_details_json['name']):
+        os.remove(file_details_json['name'])
+    f = open(file_details_json['name'], 'ab')
+
     while chunk_counter < len(file_details_json["chunks"]):
         if peer_counter > (3 * num_of_available_peers_for_file):
             print("can't find enough working peers. please try again later")
@@ -63,10 +68,12 @@ def request_file_from_peer(file_id):
             peer_counter = peer_counter + 1
         s.sendall(bytes(send_file_request_json, 'ascii'))
         received_data = s.recv(1572864)
+        # received_data = recvall(s, 1000000)
         actual_hash = hashlib.sha256(received_data).hexdigest()
         if (actual_hash == file_details_json["chunks"][chunk_counter]["chunk_hash"]):
             print("successfully received a chunk")
             chunk_counter = chunk_counter + 1
+            f.write(received_data)
         else:
             print("actual hash: " + actual_hash)
             print("expected hash: " + file_details_json["chunks"][chunk_counter]["chunk_hash"])
@@ -75,3 +82,38 @@ def request_file_from_peer(file_id):
         s.shutdown(1)
         s.close()
         time.sleep(3)
+    f.close()
+
+    # block_size = 1000000
+    sha256 = hashlib.sha256()
+    with open(file_details_json['name'], 'rb') as f:
+        buf = f.read()
+        sha256.update(buf)
+    # buf = f.read(block_size)
+    # while len(buf) > 0:
+    # sha256.update(buf)
+    # buf = f.read(block_size)
+
+    print("actual full_hash  : " + sha256.hexdigest())
+    print("expected full_hash: " + file_details_json["full_hash"])
+    if sha256.hexdigest() == file_details_json["full_hash"]:
+        print("final check sum succeeded. Your file is ready")
+    else:
+        print("The final check sum failed. Please try again.")
+
+
+def recvall(sock, n):
+    data = b''
+    while len(data) < n:
+        packet = b''
+        try:
+            packet = sock.recv()
+        except socket.timeout:
+            print()
+        except Exception:
+            print()
+        print("here")
+        if packet == b'':
+            return data
+        data += packet
+    return data
