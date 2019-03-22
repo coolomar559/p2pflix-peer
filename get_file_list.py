@@ -84,18 +84,14 @@ def request_file_from_peer(file_id):
         time.sleep(3)
     f.close()
 
-    # block_size = 1000000
+    block_size = 1000000
     sha256 = hashlib.sha256()
     with open(file_details_json['name'], 'rb') as f:
-        buf = f.read()
-        sha256.update(buf)
-    # buf = f.read(block_size)
-    # while len(buf) > 0:
-    # sha256.update(buf)
-    # buf = f.read(block_size)
+        buf = f.read(block_size)
+        while len(buf) > 0:
+            sha256.update(buf)
+            buf = f.read(block_size)
 
-    print("actual full_hash  : " + sha256.hexdigest())
-    print("expected full_hash: " + file_details_json["full_hash"])
     if sha256.hexdigest() == file_details_json["full_hash"]:
         print("final check sum succeeded. Your file is ready")
     else:
