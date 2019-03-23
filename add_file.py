@@ -2,7 +2,6 @@ import configparser
 import hashlib
 import json
 import os
-from tkinter import filedialog, Tk
 import uuid
 
 import requests
@@ -14,14 +13,6 @@ APP_DIR = os.getcwd()
 # CHUNK_DIR = '/home/ugb/rehmanz/p2pflix/Files/'
 CHUNK_DIR = os.path.join(os.getcwd(), 'files')
 BLOCK_SIZE = 4096
-
-
-# Gets file name through dialog UI
-# Returns: name of selected file
-def get_filename():
-    Tk().withdraw()
-    filename = filedialog.askopenfilename()
-    return filename
 
 
 # Reads the 'config.ini' to get configurations
