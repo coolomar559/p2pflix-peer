@@ -86,13 +86,19 @@ def chunk_file(filename):
     return chunks
 
 
+def add_guid():
+
+    return None
+
+
 def add_file_r(filename):
 
     config = get_configs()
 
     data = {}
-    data['guid'] = config['guid']
-    data['seq_number'] = config['seq_number']
+    data['guid'] = None
+    # data['guid'] = config['guid']
+    data['seq_number'] = int(config['seq_number'])
     data['name'] = filename
     data['full_hash'] = get_full_hash(filename)
     data['chunks'] = chunk_file(filename)
@@ -100,4 +106,7 @@ def add_file_r(filename):
 
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     r = requests.post('http://127.0.0.1:42069/add_file', json.dumps(data), headers=headers)
-    print(r.content)
+    print(json.dumps(r.text, indent=4))
+
+    if(data['guid'] is None):
+        add_guid()
