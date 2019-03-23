@@ -18,7 +18,7 @@ class RequestHandler(socketserver.BaseRequestHandler):
 
         hsh = request_json["full_hash"]
         chnk = request_json["chunk_id"]
-        fname = hsh + '#' + chnk
+        fname = hsh + '#' + str(chnk)
         fdir = join(hsh, fname)
 
         # TODO: THIS NEEDS TO COME FROM A CONFIG FILE
@@ -48,7 +48,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def seed():
     ip = 'localhost'
-    port = 42070
+    port = 65432
 
     server = ThreadedTCPServer((ip, port), RequestHandler)
 

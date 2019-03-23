@@ -3,7 +3,6 @@ import ipaddress
 import json
 import os
 import socket
-import time
 
 import requests
 
@@ -66,6 +65,7 @@ def request_file_from_peer(file_id):
                                   [peer_counter % len(file_details_json["peers"])]["ip"]).replace('"', ""), 65432))
         except Exception:
             peer_counter = peer_counter + 1
+            continue
         s.sendall(bytes(send_file_request_json, 'ascii'))
         received_data = s.recv(1572864)
         # received_data = recvall(s, 1000000)
@@ -81,7 +81,7 @@ def request_file_from_peer(file_id):
             peer_counter = peer_counter + 1
         s.shutdown(1)
         s.close()
-        time.sleep(3)
+        # time.sleep(3)
     f.close()
 
     block_size = 1000000
