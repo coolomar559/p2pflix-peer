@@ -18,7 +18,7 @@ class RequestHandler(socketserver.BaseRequestHandler):
         request_json = json.JSONDecoder().decode(data)
         hsh = request_json["full_hash"]
         chnk = request_json["chunk_id"]
-        fname = hsh + '#' + chnk
+        fname = hsh + '#' + str(chnk)
         fdir = join(hsh, fname)
         absdir = join(filepath, fdir)
         print(isfile(absdir))
@@ -44,7 +44,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 def seed():
     ip = 'localhost'
-    port = 42070
+    port = 65432
 
     server = ThreadedTCPServer((ip, port), RequestHandler)
 
