@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from add_file import add_file_r
 import fire
-from listen import seed
 from get_file_list import request_file_from_peer, request_file_list
+from listen import seed
 
 
 def add_file(filename: str) -> None:
