@@ -3,7 +3,6 @@ import ipaddress
 import json
 import os
 import socket
-import time
 
 import requests
 
