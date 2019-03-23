@@ -9,9 +9,10 @@ import requests
 
 
 CHUNK_SIZE = 1000000
-# CHUNK_DIR = '/home/ugb/rehmanz/Desktop/559/Files/'
-APP_DIR = '/home/ugb/rehmanz/p2pflix/'
-CHUNK_DIR = '/home/ugb/rehmanz/p2pflix/Files/'
+# APP_DIR = '/home/ugb/rehmanz/p2pflix/'
+APP_DIR = os.getcwd()
+# CHUNK_DIR = '/home/ugb/rehmanz/p2pflix/Files/'
+CHUNK_DIR = os.path.join(os.getcwd(), 'files')
 BLOCK_SIZE = 4096
 
 
