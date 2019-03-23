@@ -11,7 +11,7 @@ CHUNK_SIZE = 1000000
 # APP_DIR = '/home/ugb/rehmanz/p2pflix/'
 APP_DIR = os.getcwd()
 # CHUNK_DIR = '/home/ugb/rehmanz/p2pflix/Files/'
-CHUNK_DIR = os.path.join(os.getcwd(), 'files')
+CHUNK_DIR = os.path.join(os.getcwd(), 'files/')
 BLOCK_SIZE = 4096
 
 
@@ -37,6 +37,7 @@ def get_configs():
 def get_full_hash(filename):
     full_hash = hashlib.sha256()
     with open(filename, 'rb') as f:
+        print("\tGetting full hash\n")
         for block in iter(lambda: f.read(BLOCK_SIZE), b''):
             full_hash.update(block)
     return full_hash.hexdigest()
@@ -45,12 +46,13 @@ def get_full_hash(filename):
 # 1. Chunks the file into smaller parts
 # 2. Saves the chunks into the 'Files' directory
 # 3. Returns the hashes of the chunk files
-def chunk_file(filename):
-
+def chunk_file(filename, fhash):
     with open(filename, 'rb') as f:
 
         # Create directory to store chunks
-        new_dir = CHUNK_DIR + filename.split('.')[0]
+#        new_dir = CHUNK_DIR + filename.split('.')[0]
+        new_dir = CHUNK_DIR + fhash
+        print(new_dir)
         try:
             os.mkdir(new_dir)
         except Exception:
@@ -64,7 +66,7 @@ def chunk_file(filename):
         for chunk in iter(lambda: f.read(CHUNK_SIZE), b''):
             chunk_data = {}
             chunk_data['id'] = chunk_id
-            chunk_data['name'] = filename + '#' + str(chunk_id)
+            chunk_data['name'] = fhash + '#' + str(chunk_id)
             chunk_data['hash'] = hashlib.sha256(chunk).hexdigest()
             chunks.append(chunk_data)
 
@@ -86,8 +88,9 @@ def add_file_r(filename):
     data['guid'] = config['guid']
     data['seq_number'] = config['seq_number']
     data['name'] = filename
-    data['full_hash'] = get_full_hash(filename)
-    data['chunks'] = chunk_file(filename)
+    fullhash = get_full_hash(filename)
+    data['full_hash'] = fullhash
+    data['chunks'] = chunk_file(filename, fullhash)
     print(json.dumps(data, indent=4))
 
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
