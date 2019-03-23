@@ -2,8 +2,8 @@ import configparser
 import hashlib
 import json
 import os
+from tkinter import filedialog, Tk
 import uuid
-from tkinter import Tk, filedialog
 
 import requests
 
