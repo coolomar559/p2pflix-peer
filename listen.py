@@ -11,15 +11,19 @@ import requests
 
 class RequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        # TODO: THIS NEEDS TO COME FROM A CONFIG FILE
-        filepath = getcwd() + '/files/'
-
         data = str(self.request.recv(1024), 'ascii')
         request_json = json.JSONDecoder().decode(data)
+        print("I got me a request.\n")
+        print(data)
+
         hsh = request_json["full_hash"]
         chnk = request_json["chunk_id"]
         fname = hsh + '#' + chnk
         fdir = join(hsh, fname)
+
+        # TODO: THIS NEEDS TO COME FROM A CONFIG FILE
+        filepath = getcwd() + '/files/'
+
         absdir = join(filepath, fdir)
         print(isfile(absdir))
         if isfile(absdir):
