@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+from add_file import add_file_r
 import fire
 
 
 def add_file(filename: str) -> None:
+    add_file_r(filename)
     pass
 
 
