@@ -1,4 +1,4 @@
-import configparser
+# import configparser
 import json
 from os import getcwd
 from os.path import isfile, join
@@ -6,10 +6,12 @@ import socketserver
 import threading
 import time
 
+import requests
+
 
 class RequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        #TODO: THIS NEEDS TO COME FROM A CONFIG FILE
+        # TODO: THIS NEEDS TO COME FROM A CONFIG FILE
         filepath = getcwd() + '/files/'
 
         data = str(self.request.recv(1024), 'ascii')
@@ -51,17 +53,17 @@ def seed():
     t.start()
     print("Server loop running")
 
-#TODO: This needs to come from the config file
+# TODO: This needs to come from the config file
 #    config = get_configs()
 #    data['guid'] = config['guid']
     data = {'guid': 1}
     try:
         alive = True
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-        
+
         while alive:
             time.sleep(60)
-            r = requests.put('http://127.0.0.1:42069/keep_alive', json.dumps(data), headers=headers)
+            requests.put('http://127.0.0.1:42069/keep_alive', json.dumps(data), headers=headers)
     except KeyboardInterrupt:
         print("Shutdown Initiated.")
 
