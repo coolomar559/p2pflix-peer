@@ -3,7 +3,7 @@ from add_file import add_my_file
 
 import fire
 
-from get_file_list import request_file_list, request_file_from_peer
+from get_file_list import request_file_from_peer, request_file_list
 
 
 def add_file(filename: str) -> None:
