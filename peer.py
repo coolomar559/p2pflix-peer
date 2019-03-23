@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import fire
+import listen
 
 
 def add_file(filename: str) -> None:
@@ -15,7 +16,7 @@ def get_file(file_id: int) -> None:
 
 
 def listen():
-    pass
+    listen.seed()
 
 
 if __name__ == "__main__":
