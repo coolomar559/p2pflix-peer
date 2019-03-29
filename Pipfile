@@ -17,6 +17,9 @@ pytest = "*"
 [packages]
 fire = "*"
 requests = "*"
+toml = "*"
+ip = "*"
+ipy = "*"
 
 [requires]
 python_version = "3.7"

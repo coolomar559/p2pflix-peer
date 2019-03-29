@@ -20,7 +20,7 @@ def request_file_list(**kwargs):
     print(json.dumps(r_json, indent=4))
 
 
-def request_file_details_from_tracker(file_id, **kwargs):
+def request_file_details_from_tracker(file_hash, **kwargs):
     my_ip = str()
     for key, _value in kwargs.items():
         if key == 'ip' and ipaddress.ip_address(kwargs['ip']):
@@ -28,13 +28,13 @@ def request_file_details_from_tracker(file_id, **kwargs):
             my_ip = kwargs['ip']
     if not my_ip:
         my_ip = "localhost"
-    r = requests.get('http://' + str(my_ip) + ':42069/file/' + str(file_id))
+    r = requests.get('http://' + str(my_ip) + ':42069/file_by_hash/' + file_hash)
     return r.text
 # TODO: will probably need to add some error checking and stuff here
 
 
-def request_file_from_peer(file_id):
-    file_details_json = json.loads(str(request_file_details_from_tracker(file_id)))
+def request_file_from_peer(file_hash):
+    file_details_json = json.loads(str(request_file_details_from_tracker(file_hash)))
     print(json.dumps(file_details_json, indent=4))
     if file_details_json["success"] is True:
         print("successfully got file details from tracker")
@@ -55,7 +55,8 @@ def request_file_from_peer(file_id):
             exit(0)
         send_file_request_json = {
             "full_hash": file_details_json["full_hash"],
-            "chunk_id": file_details_json["chunks"][chunk_counter]["id"]}
+            "chunk_id": file_details_json["chunks"][chunk_counter]["id"],
+            "size_request": False}
         send_file_request_json = json.dumps(send_file_request_json)
         print(send_file_request_json)
 
