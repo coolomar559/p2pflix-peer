@@ -15,7 +15,7 @@ def get_file_list():
     pass
 
 
-def get_file(file_id: int) -> None:
+def get_file(file_id: str) -> None:
     request_file_from_peer(file_id)
     pass
 
