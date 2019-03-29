@@ -2,15 +2,13 @@ import configparser
 import hashlib
 import json
 import os
-import uuid
+import shutil
 
 import requests
 
 
 CHUNK_SIZE = 1000000
-# APP_DIR = '/home/ugb/rehmanz/p2pflix/'
 APP_DIR = os.getcwd()
-# CHUNK_DIR = '/home/ugb/rehmanz/p2pflix/Files/'
 CHUNK_DIR = os.path.join(os.getcwd(), 'files/')
 BLOCK_SIZE = 4096
 
@@ -21,23 +19,34 @@ BLOCK_SIZE = 4096
 def get_configs():
     try:
         config = configparser.ConfigParser()
-        config.read(APP_DIR + 'config.ini')
+        config.read('config.ini')
         return dict(config.items('p2pflix'))
     except Exception:
-        print('config.ini file not set, creating a new one.')
-        config_file = open(APP_DIR + 'config.ini', 'w')
+        config = configparser.ConfigParser()
         config.add_section('p2pflix')
-        config.set('p2pflix', 'guid', str(uuid.uuid4()))
         config.set('p2pflix', 'seq_number', '0')
-        config.write(config_file)
+        with open('config.ini', 'w') as f:
+            config.write(f)
         return dict(config.items('p2pflix'))
+
+
+# Reads config file, updates seq_number,
+# writes guid if it does not exist
+# and writes file
+def update_seq(guid, seq_number):
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    config.set('p2pflix', 'seq_number', str(seq_number+1))
+    if 'seq_number' not in config:
+        config.set('p2pflix', 'guid', guid)
+    with open('config.ini', 'w') as f:
+        config.write(f)
 
 
 # Returns hash of the full file
 def get_full_hash(filename):
     full_hash = hashlib.sha256()
     with open(filename, 'rb') as f:
-        print("\tGetting full hash\n")
         for block in iter(lambda: f.read(BLOCK_SIZE), b''):
             full_hash.update(block)
     return full_hash.hexdigest()
@@ -50,13 +59,11 @@ def chunk_file(filename, fhash):
     with open(filename, 'rb') as f:
 
         # Create directory to store chunks
-#        new_dir = CHUNK_DIR + filename.split('.')[0]
         new_dir = CHUNK_DIR + fhash
-        print(new_dir)
         try:
             os.mkdir(new_dir)
         except Exception:
-            print('This file already exists!!')
+            print('Could not create directory!')
             exit(-1)
 
         # Chunk file, save chunks to chunk directory and
@@ -80,28 +87,34 @@ def chunk_file(filename, fhash):
     return chunks
 
 
-def add_guid():
+def send_request(data, ip='127.0.0.1'):
+    port = 42069
+    url = 'http://' + str(ip) + ':' + str(port) + '/add_file'
 
-    return None
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    r = requests.post(url, json.dumps(data), headers=headers)
+
+    return r.json()
 
 
 def add_file_r(filename):
 
+    # If file directory does not exists, create one
+    if (not os.path.exists('files')):
+        os.mkdir('files')
+
     config = get_configs()
 
     data = {}
-    data['guid'] = None
-    # data['guid'] = config['guid']
+    data['guid'] = None if 'guid' not in config else config['guid']
     data['seq_number'] = int(config['seq_number'])
     data['name'] = filename
     fullhash = get_full_hash(filename)
     data['full_hash'] = fullhash
     data['chunks'] = chunk_file(filename, fullhash)
-    print(json.dumps(data, indent=4))
 
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    r = requests.post('http://127.0.0.1:42069/add_file', json.dumps(data), headers=headers)
-    print(json.dumps(r.text, indent=4))
-
-    if(data['guid'] is None):
-        add_guid()
+    response = send_request(data)
+    if(not response['success']):
+        shutil.rmtree('files/' + fullhash)
+    else:
+        update_seq(response['guid'], data['seq_number'])
