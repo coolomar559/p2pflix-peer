@@ -9,19 +9,14 @@ import toml
 def get_t_list():
     list_of_ips = get_first_t()
     list_of_ips = add_all_trackers(list_of_ips)
-    toml_file = open('./tracker.toml', 'r')
-    print("content of the toml file after getting all tracker info:  " + toml_file.read())
     overwrite_ips_in_toml(list_of_ips)
     return list_of_ips
 
 
 def overwrite_ips_in_toml(list_of_ips):
-    toml_file = open('./tracker.toml', 'r+')
-    toml_content = toml_file.read()
-    print("content of the toml file before writing to it: " + toml_content)
-    toml_content = toml.loads(toml_content)
-    toml_content['trackers'] = list_of_ips
-    toml_file = toml_file.write(toml.dumps(toml_content))
+    my_dict = {'ip': list_of_ips}
+    with open('./tracker.toml', 'w') as fp:
+        toml.dump(my_dict, fp)
 
 
 def add_all_trackers(list_of_ips):
@@ -29,7 +24,7 @@ def add_all_trackers(list_of_ips):
         try:
             r = requests.get('http://' + ip + "/tracker_list")
         except Exception:
-            list_of_ips.remove(ip)
+            # list_of_ips.remove(ip)
             continue
         request_json = json.loads(r.text())
         if (request_json['success']):
@@ -41,13 +36,16 @@ def add_all_trackers(list_of_ips):
 
 def get_first_t():
     if os.path.exists('./tracker.toml'):
-        toml_file = open('./tracker.toml', 'r')
+        try:
+            toml_file = open('./tracker.toml', 'r+')
+        except Exception:
+            return get_user_input_for_ip()
         toml_obj = toml.load(toml_file)
         toml_file.close()
-        print("length of ops in tracker.toml: " + str(len(toml_obj['servers']['ip'])))
+        if 'ip' not in toml_obj:
+            return get_user_input_for_ip()
         toml_file = open('./tracker.toml', 'r')
-        print("content of the toml file after initial read: " + toml_file.read())
-        return list(toml_obj['servers']['ip'])
+        return list(toml_obj['ip'])
     else:
         return get_user_input_for_ip()
 
@@ -58,18 +56,18 @@ def add_trackers(ip):
             r = requests.get('http://' + ip + '/tracker_list')
             return r.text()
         except Exception:
-            print(Exception)
+            print()
 
 
 def get_user_input_for_ip():
     print("Couldn't find a tracker.toml file in this directory. Please enter the IP of a tracker")
     while True:
         tracker_ip_from_user = input()
-        if IP(tracker_ip_from_user):
+        try:
+            IP(tracker_ip_from_user)
             return [tracker_ip_from_user]
-            break
-        else:
-            print("invalid IP please ")
+        except Exception:
+            print("invalid IP please try again")
 
 
 if __name__ == "__main__":
