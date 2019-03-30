@@ -1,3 +1,4 @@
+import os
 import shutil
 
 from get_configs import get_configs, get_trackers, update_seq
@@ -34,4 +35,5 @@ def deregister_file(file_hash):
 
     if (send_request(data)['success'] is True):
         update_seq(config['guid'], int(config['seq_number']))
-        shutil.rmtree('files/' + file_hash)
+        if(os.path.exists('files/' + file_hash)):
+            shutil.rmtree('files/' + file_hash)

@@ -93,3 +93,6 @@ def add_file_r(filename):
         shutil.rmtree('files/' + fullhash)
     else:
         update_seq(response['guid'], data['seq_number'])
+        return True
+
+    return False
