@@ -78,6 +78,10 @@ def add_file_r(filename):
     if (not os.path.exists('files')):
         os.mkdir('files')
 
+    if(not os.path.exists(filename)):
+        print("file does not exist!")
+        return False
+
     config = get_configs() if os.path.exists('config.ini') else add_seq()
 
     data = {}
