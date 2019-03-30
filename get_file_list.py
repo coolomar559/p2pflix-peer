@@ -1,37 +1,75 @@
+from concurrent import futures
 import hashlib
 import ipaddress
 import json
 import os
 import socket
 
+from get_tracker_list import get_t_list
 import requests
 
 
-def request_file_list(**kwargs):
-    my_ip = str()
-
-    for key, _value in kwargs.items():
-        if key == 'ip' and ipaddress.ip_address(kwargs['ip']):
-            my_ip = kwargs['ip']
-    if not my_ip:
-        my_ip = "localhost"
-    r = requests.get('http://' + str(my_ip) + ':42069/file_list')
-    r_json = r.json()
-    print(json.dumps(r_json, indent=4))
-    return r_json['files']
+T_PORT = 42069
 
 
-def request_file_details_from_tracker(file_hash, **kwargs):
-    my_ip = str()
-    for key, _value in kwargs.items():
-        if key == 'ip' and ipaddress.ip_address(kwargs['ip']):
-            print(kwargs['ip'])
-            my_ip = kwargs['ip']
-    if not my_ip:
-        my_ip = "localhost"
-    r = requests.get('http://' + str(my_ip) + ':42069/file_by_hash/' + file_hash)
-    return r.text
+def request_file_list():
+    tracker_ips = get_t_list()
+    for tracker_ip in tracker_ips:
+        try:
+            r = requests.get('http://' + str(tracker_ip) + ':' + str(T_PORT) + '/file_list')
+        except Exception:
+            continue
+        r_json = r.json()
+        print(json.dumps(r_json, indent=4))
+        return r_json
+
+
+def request_file_details_from_tracker(file_hash):
+    tracker_ips = get_t_list()
+    for tracker_ip in tracker_ips:
+        try:
+            r = requests.get('http://' + str(tracker_ip) + ':' + str(T_PORT) + '/file_by_hash/' + file_hash)
+            file_details_json = json.loads(r.text)
+            if file_details_json['success']:
+                return file_details_json
+            else:
+                continue
+        except Exception:
+            continue
+    return None
 # TODO: will probably need to add some error checking and stuff here
+
+
+def get_full_file(full_file_hash, num_of_threads=4):
+    file_details_json = request_file_details_from_tracker(full_file_hash)
+    if file_details_json is None:
+        print("Could not find a file with this hash at any known trackers.")
+        print("Please try a different hash or different trackers")
+        return
+    if not download_many(file_details_json, num_of_threads):
+        print("Failed to download. Please try again later.")
+    combine_chunks(file_details_json)
+
+
+def download_many(file_details_json, num_of_threads):
+    workers = min(num_of_threads, len(file_details_json['chunks']))
+    with futures.ThreadPoolExecutor(workers) as executor:
+        res = executor.map(download_one_chunk, (file_details_json['chunks'], peers_list))
+        if False in res:
+            return False
+        else:
+            return True
+
+def download_one_chunk(json_peer_list_paid):
+    file_details_json = json_peer_list_paid[0]
+    peers_list = json_peer_list_paid[1]
+    chunk_request_json = {"full_hash":file_details_json["file_hash"], "chunk_id":}
+    for peer in peers_list:
+        
+
+
+def combine_chunks(file_details_json):
+    
 
 
 def request_file_from_peer(file_hash):
