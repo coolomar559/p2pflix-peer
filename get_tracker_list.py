@@ -6,6 +6,33 @@ import requests
 import toml
 
 
+def gui_add_ip_to_toml(input_ip):
+    if not IP(input_ip):
+        return "invalid IP."
+    fp = open('./tracker.toml', 'r+')
+    ips = fp.read()
+    fp.close()
+    ips = str(ips)
+    try:
+        ips = toml.loads(ips)
+    except Exception:
+        open('./tracker.toml', 'w').close()
+    if ips != "":  # str(ips) not in ips['ips']:
+        if input_ip not in ips['ip']:
+            fp = open('./tracker.toml', 'w+')
+            ips['ip'].append(input_ip)
+            toml.dump(ips, fp)
+            fp.close()
+            return "It has been added"
+        else:
+            return "It is already in the toml file"
+    else:
+        fp = open('./tracker.toml', 'w+')
+        ips = {"ip": [input_ip]}
+        toml.dump(ips, fp)
+        fp.close()
+
+
 def get_t_list():
     list_of_ips = get_first_t()
     list_of_ips = add_all_trackers(list_of_ips)
