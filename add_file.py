@@ -1,9 +1,8 @@
 import hashlib
-import json
 import os
 import shutil
 
-from get_configs import add_seq, get_configs, update_seq
+from get_configs import add_seq, get_configs, get_trackers, update_seq
 import requests
 
 
@@ -58,14 +57,19 @@ def chunk_file(filename, fhash):
 
 
 def send_request(data, ip='127.0.0.1'):
+
+    ip_list = get_trackers()
+
     port = 42069
-    url = 'http://' + str(ip) + ':' + str(port) + '/add_file'
+    for i in range(0, len(ip_list)):
+        ip = ip_list[i]
+        url = 'http://' + str(ip) + ':' + str(port) + '/add_file'
+        r = requests.post(url, json=data)
+        if(r.status_code == requests.codes.ok):
+            print(r.json())
+            return r.json()
 
-    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
-    r = requests.post(url, json.dumps(data), headers=headers)
-    print(r.json())
-
-    return r.json()
+    return {'success': False}
 
 
 def add_file_r(filename):

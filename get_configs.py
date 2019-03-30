@@ -1,5 +1,7 @@
 import configparser
 
+import toml
+
 
 # Reads config file, updates seq_number,
 # writes guid if it does not exist
@@ -35,3 +37,11 @@ def add_seq():
     with open('config.ini', 'w') as f:
         config.write(f)
     return dict(config.items('p2pflix'))
+
+
+# Reads toml file and returns a list of trackers
+def get_trackers():
+    toml_file = open('./tracker.toml', 'r')
+    toml_obj = toml.load(toml_file)
+    toml_file.close()
+    return list(toml_obj['ip'])

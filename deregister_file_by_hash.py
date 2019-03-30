@@ -1,8 +1,7 @@
 import shutil
 
-from get_configs import get_configs, update_seq
+from get_configs import get_configs, get_trackers, update_seq
 import requests
-import toml
 
 
 # Gets the list of trackers from tracker.toml,
@@ -10,9 +9,7 @@ import toml
 # it gets a response
 def send_request(data, ip='127.0.0.1'):
 
-    toml_file = open('./tracker.toml', 'r')
-    toml_obj = toml.load(toml_file)
-    ip_list = list(toml_obj['ip'])
+    ip_list = get_trackers()
 
     port = 42069
     for i in range(0, len(ip_list)):

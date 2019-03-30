@@ -1,6 +1,5 @@
-from get_configs import get_configs
+from get_configs import get_configs, get_trackers
 import requests
-import toml
 
 
 # Gets the list of trackers from tracker.toml,
@@ -13,9 +12,7 @@ def send_request():
     if 'guid' not in config:
         return []
 
-    toml_file = open('./tracker.toml', 'r')
-    toml_obj = toml.load(toml_file)
-    ip_list = list(toml_obj['ip'])
+    ip_list = get_trackers()
 
     port = 42069
     for i in range(0, len(ip_list)):
