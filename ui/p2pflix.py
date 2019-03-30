@@ -157,32 +157,23 @@ def peer_status():
 def get_file(file_hash, file_name):
     print("Getting file with hash {}".format(file_hash))
     progress_bar = ui.download_bar
-    cancel_button = ui.download_cancel
     label = ui.download_label
 
-    # cancel_button.show()
-    # cancel_button.setEnabled(True)
-    # label.show()
+    ui.download_container.setVisible(True)
+    ui.download_container.setEnabled(True)
     label.setText("Downloading {}".format(file_name))
-    # progress_bar.show()
     progress_bar.setValue(0)
-    ui.download_container.show()
 
     progress = 0
     while(progress < 100):
-        time.sleep(1)
-        progress += 10
+        #time.sleep(1)
+        progress += 0.000001
         progress_bar.setValue(progress)
 
     QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(file_name))
 
-    '''
-    progress_bar.hide()
-    cancel_button.hide()
-    label.hide()
-    '''
-
-    ui.download_container.hide()
+    ui.download_container.setEnabled(False)
+    ui.download_container.setVisible(False)
 
 
 def deregister_file(file_hash):
@@ -286,12 +277,8 @@ def setup_ui(ui):
     ui.choose_tracker_add.clicked.connect(choose_tracker_add)
 
     # Download bar setup
-    '''
-    ui.download_bar.hide()
-    ui.download_cancel.hide()
-    ui.download_label.hide()
-    '''
-    ui.download_container.hide()
+    ui.download_container.setVisible(False)
+    ui.download_container.setEnabled(False)
 
     refresh()
     peer_status()

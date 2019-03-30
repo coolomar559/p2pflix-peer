@@ -49,6 +49,9 @@
     </property>
     <widget class="QWidget" name="page">
      <widget class="QTabWidget" name="tabs">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -252,6 +255,9 @@
       </property>
      </widget>
      <widget class="QWidget" name="download_container" native="true">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -263,7 +269,7 @@
       <widget class="QProgressBar" name="download_bar">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>30</x>
          <y>0</y>
          <width>701</width>
          <height>23</height>
@@ -279,7 +285,7 @@
       <widget class="QLabel" name="download_label">
        <property name="geometry">
         <rect>
-         <x>20</x>
+         <x>30</x>
          <y>30</y>
          <width>611</width>
          <height>17</height>
@@ -292,7 +298,7 @@
       <widget class="QPushButton" name="download_cancel">
        <property name="geometry">
         <rect>
-         <x>640</x>
+         <x>650</x>
          <y>30</y>
          <width>80</width>
          <height>25</height>
