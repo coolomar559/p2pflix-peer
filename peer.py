@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from add_file import add_file_r
 from deregister_file_by_hash import deregister_file
+from get_peer_status import get_status
 import fire
 from get_file_list import request_file_from_peer, request_file_list
 from listen import seed
@@ -18,6 +19,10 @@ def get_file_list():
     request_file_list()
 
 
+def get_peer_status():
+    get_status()
+
+
 def get_file(file_id: str) -> None:
     request_file_from_peer(file_id)
 
@@ -33,4 +38,5 @@ if __name__ == "__main__":
         'get-file': get_file,
         'listen': listen,
         'deregister-file-by-hash': deregister_file_by_hash,
+        'get-peer-status': get_peer_status,
     })
