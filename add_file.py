@@ -1,9 +1,9 @@
-import configparser
 import hashlib
 import json
 import os
 import shutil
 
+from get_configs import add_seq, get_configs, update_seq
 import requests
 
 
@@ -11,36 +11,6 @@ CHUNK_SIZE = 1000000
 APP_DIR = os.getcwd()
 CHUNK_DIR = os.path.join(os.getcwd(), 'files/')
 BLOCK_SIZE = 4096
-
-
-# Reads the 'config.ini' to get configurations
-# and returns them in a dict
-# Creates a config file if one does not exit
-def get_configs():
-    try:
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        return dict(config.items('p2pflix'))
-    except Exception:
-        config = configparser.ConfigParser()
-        config.add_section('p2pflix')
-        config.set('p2pflix', 'seq_number', '0')
-        with open('config.ini', 'w') as f:
-            config.write(f)
-        return dict(config.items('p2pflix'))
-
-
-# Reads config file, updates seq_number,
-# writes guid if it does not exist
-# and writes file
-def update_seq(guid, seq_number):
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    config.set('p2pflix', 'seq_number', str(seq_number+1))
-    if 'seq_number' not in config:
-        config.set('p2pflix', 'guid', guid)
-    with open('config.ini', 'w') as f:
-        config.write(f)
 
 
 # Returns hash of the full file
@@ -93,6 +63,7 @@ def send_request(data, ip='127.0.0.1'):
 
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
     r = requests.post(url, json.dumps(data), headers=headers)
+    print(r.json())
 
     return r.json()
 
@@ -103,7 +74,7 @@ def add_file_r(filename):
     if (not os.path.exists('files')):
         os.mkdir('files')
 
-    config = get_configs()
+    config = get_configs() if os.path.exists('config.ini') else add_seq()
 
     data = {}
     data['guid'] = None if 'guid' not in config else config['guid']
