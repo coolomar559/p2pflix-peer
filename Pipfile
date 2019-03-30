@@ -19,6 +19,7 @@ v = {editable = true,version = "*"}
 fire = "*"
 requests = "*"
 toml = "*"
+pyqt5 = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3"
