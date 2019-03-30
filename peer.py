@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from add_file import add_file_r
 from deregister_file_by_hash import deregister_file
-from get_peer_status import get_status
 import fire
 from get_file_list import request_file_from_peer, request_file_list
+from get_peer_status import get_status
 from listen import seed
 
 
