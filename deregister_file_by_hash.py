@@ -4,6 +4,7 @@ from get_configs import get_configs, update_seq
 import requests
 import toml
 
+
 # Gets the list of trackers from tracker.toml,
 # sends requests to ip's in the list until
 # it gets a response
@@ -26,7 +27,7 @@ def send_request(data, ip='127.0.0.1'):
 
 
 def deregister_file(file_hash):
-    
+
     config = get_configs()
 
     data = {}

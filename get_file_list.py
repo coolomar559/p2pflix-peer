@@ -18,6 +18,7 @@ def request_file_list(**kwargs):
     r = requests.get('http://' + str(my_ip) + ':42069/file_list')
     r_json = r.json()
     print(json.dumps(r_json, indent=4))
+    return r_json['files']
 
 
 def request_file_details_from_tracker(file_hash, **kwargs):
