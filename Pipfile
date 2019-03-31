@@ -19,6 +19,7 @@ fire = "*"
 requests = "*"
 toml = "*"
 pyqt5 = "*"
+ipy = "*"
 
 [requires]
 python_version = "3"

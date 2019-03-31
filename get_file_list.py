@@ -23,6 +23,11 @@ def request_file_list():
         print(json.dumps(r_json, indent=4))
         return r_json
 
+    return {
+        "success": False,
+        "error": "No trackers available",
+    }
+
 
 def request_file_details_from_tracker(file_hash):
     tracker_ips = get_t_list()

@@ -1,10 +1,9 @@
 from functools import partial
 from pathlib import Path
-import time
+# import time
 
 import get_file_list
 import get_peer_status
-
 from PyQt5 import QtWidgets, uic
 
 UI_FILE_NAME = "./ui/p2pflix-ui.ui"
@@ -169,7 +168,7 @@ def get_file(file_hash, file_name):
 
     progress = 0
     while(progress < 100):
-        #time.sleep(1)
+        # time.sleep(1)
         progress += 0.000001
         progress_bar.setValue(progress)
 
