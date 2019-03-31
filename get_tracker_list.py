@@ -34,7 +34,14 @@ def gui_add_ip_to_toml(input_ip):
 
 
 def get_t_list():
-    list_of_ips = get_first_t()
+    list_of_ips = []
+    try:
+        fp = open('./tracker.toml', 'r+')
+        tracker_content = fp.read()
+        list_of_ips = toml.loads(tracker_content)
+    except Exception:
+        return False
+    # list_of_ips = get_first_t()
     list_of_ips = add_all_trackers(list_of_ips)
     overwrite_ips_in_toml(list_of_ips)
     return list_of_ips
