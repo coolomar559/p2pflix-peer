@@ -18,10 +18,12 @@ def send_request():
     for i in range(0, len(ip_list)):
         ip = ip_list[i]
         url = 'http://' + str(ip) + ':' + str(port) + '/peer_status' + '/' + config['guid']
-        r = requests.get(url)
-        if(r.status_code == requests.codes.ok):
-            return r.json()
-
+        try:
+            r = requests.get(url, timeout=1)
+            if(r.status_code == requests.codes.ok):
+                return r.json()
+        except Exception:
+            print(ip_list[i] + " did not respond!")
     print("there is no working tracker ip!")
     return []
 

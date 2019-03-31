@@ -16,11 +16,13 @@ def send_request(data, ip='127.0.0.1'):
     for i in range(0, len(ip_list)):
         ip = ip_list[i]
         url = 'http://' + str(ip) + ':' + str(port) + '/deregister_file_by_hash'
-        r = requests.delete(url, json=data)
-        if(r.status_code == requests.codes.ok):
-            print(r.json())
+        try:
+            r = requests.delete(url, json=data, timeout=1)
+            if(r.status_code == requests.codes.ok):
+                print(r.json())
             return r.json()
-
+        except Exception:
+            print(ip_list[i] + " did not respond!")
     print("there is no working tracker ip!")
 
 

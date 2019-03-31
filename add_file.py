@@ -64,10 +64,13 @@ def send_request(data, ip='127.0.0.1'):
     for i in range(0, len(ip_list)):
         ip = ip_list[i]
         url = 'http://' + str(ip) + ':' + str(port) + '/add_file'
-        r = requests.post(url, json=data)
-        if(r.status_code == requests.codes.ok):
-            print(r.json())
-            return r.json()
+        try:
+            r = requests.post(url, json=data, timeout=1)
+            if(r.status_code == requests.codes.ok):
+                print(r.json())
+                return r.json()
+        except Exception:
+            print(ip_list[i] + " did not respond!")
 
     return {'success': False}
 
@@ -78,7 +81,7 @@ def add_file_r(filename):
     if (not os.path.exists('files')):
         os.mkdir('files')
 
-    if(not os.path.exists(filename)):
+    if(not os.path.exists(filename) or os.path.isdir(filename)):
         print("file does not exist!")
         return False
 
