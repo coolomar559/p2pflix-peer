@@ -45,35 +45,118 @@ def request_file_details_from_tracker(file_hash):
 # TODO: will probably need to add some error checking and stuff here
 
 
-def get_full_file(full_file_hash, num_of_threads=6):
+def get_full_file(full_file_hash, num_of_threads=4):
     file_details_json = request_file_details_from_tracker(full_file_hash)
     if file_details_json is None:
-        print("Could not find a file with this hash at any known trackers.")
-        print("Please try a different hash or different trackers")
-        return
+        # print("Could not find a file with this hash at any known trackers.")
+        # print("Please try a different hash or different trackers")
+        return False
     if not download_many(file_details_json, num_of_threads):
-        print("Failed to download. Please try again later.")
-    # combine_chunks(file_details_json)
+        # print("Failed to download. Please try again later.")
+        return False
+    combine_chunks(file_details_json)
+    if verify_full_file(file_details_json):
+        return True
+    else:
+        return False
+
+
+def verify_full_file(file_details_json):
+    file_name = file_details_json['name']
+    expected_hash = file_details_json['file_hash']
+    block_size = 1000000
+    sha256 = hashlib.sha256()
+
+    with open(file_name, 'rb') as f:
+        buf = f.read(block_size)
+        while len(buf) > 0:
+            sha256.update(buf)
+            buf = f.read(block_size)
+
+    if sha256.hexdigest() == expected_hash:
+        return True
+    else:
+        return False
 
 
 def download_many(file_details_json, num_of_threads):
     workers = min(num_of_threads, len(file_details_json['chunks']))
     json_to_send = []
+
     for chunk in file_details_json['chunks']:
         json_to_send.append({'chunk': chunk, 'peers': file_details_json['peers'],
-                             'full_file_hash': file_details_json['full_hash']})
+                             'full_file_hash': file_details_json['full_hash'],
+                             'name': file_details_json['name']})
+
     with futures.ThreadPoolExecutor(workers) as executor:
         res = executor.map(download_one_chunk, json_to_send)
+        # print('length of res: ' + str(len(res)))
         if False in res:
             return False
         else:
+            combine_chunks(file_details_json)
             return True
+
+
+def combine_chunks(file_details_json):
+    full_file = open(file_details_json['name'], 'ab+')
+    for chunk in file_details_json['chunks']:
+        chunk_file = open(chunk['name'], 'rb')
+        chunk_data = chunk_file.read()
+        chunk_file.close()
+        os.remove(chunk['name'])
+        full_file.append(chunk_data)
+    full_file.close()
 
 
 def download_one_chunk(chunk):
     chunk_size = request_chunk_size(chunk)
     if not chunk_size:
         return False
+    chunk_data = request_chunk_data(chunk, chunk_size)
+    if chunk_data is None:
+        return False
+    chunk_file = open(chunk['chunk']['name'], 'wb')
+    chunk_file.write(chunk_data)
+    chunk_file.close()
+    return True
+
+
+def verify_chunk(chunk_data, chunk):
+    actual_hash = hashlib.sha256(chunk_data).hexdigest()
+    expected_hash = chunk['chunk']['hash']
+    if expected_hash == actual_hash:
+        return True
+    else:
+        return False
+
+
+def request_chunk_data(chunk, chunk_size):
+    request_chunk_data_json = {
+        'full_hash': chunk['full_file_hash'],
+        'chunk_id': chunk['chunk']['id'],
+        'size': False}
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    peer_id = 0
+    while peer_id < len(chunk['peer']):
+        try:
+            s.connect((json.dumps(request_chunk_data_json['peers'][peer_id]['ip']).replace('"', ""), 65432))
+        except Exception:
+            continue
+        try:
+            s.sendall(bytes(request_chunk_data_json, 'ascii'))
+        except Exception:
+            continue
+        try:
+            chunk_data = recvall(s, chunk_size)
+            if verify_chunk(chunk_data, chunk):
+                return chunk_data
+            else:
+                continue
+        except Exception:
+            continue
+        # return chunk_data
+    return None
 
 
 def request_chunk_size(chunk):
