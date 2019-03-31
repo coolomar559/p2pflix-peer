@@ -1,6 +1,6 @@
 from concurrent import futures
 import hashlib
-import ipaddress
+# import ipaddress
 import json
 import os
 import socket
@@ -40,7 +40,7 @@ def request_file_details_from_tracker(file_hash):
 # TODO: will probably need to add some error checking and stuff here
 
 
-def get_full_file(full_file_hash, num_of_threads=4):
+def get_full_file(full_file_hash, num_of_threads=6):
     file_details_json = request_file_details_from_tracker(full_file_hash)
     if file_details_json is None:
         print("Could not find a file with this hash at any known trackers.")
@@ -48,28 +48,50 @@ def get_full_file(full_file_hash, num_of_threads=4):
         return
     if not download_many(file_details_json, num_of_threads):
         print("Failed to download. Please try again later.")
-    combine_chunks(file_details_json)
+    # combine_chunks(file_details_json)
 
 
 def download_many(file_details_json, num_of_threads):
     workers = min(num_of_threads, len(file_details_json['chunks']))
+    json_to_send = []
+    for chunk in file_details_json['chunks']:
+        json_to_send.append({'chunk': chunk, 'peers': file_details_json['peers'],
+                             'full_file_hash': file_details_json['full_hash']})
     with futures.ThreadPoolExecutor(workers) as executor:
-        res = executor.map(download_one_chunk, (file_details_json['chunks'], peers_list))
+        res = executor.map(download_one_chunk, json_to_send)
         if False in res:
             return False
         else:
             return True
 
-def download_one_chunk(json_peer_list_paid):
-    file_details_json = json_peer_list_paid[0]
-    peers_list = json_peer_list_paid[1]
-    chunk_request_json = {"full_hash":file_details_json["file_hash"], "chunk_id":}
-    for peer in peers_list:
-        
+
+def download_one_chunk(chunk):
+    chunk_size = request_chunk_size(chunk)
+    if not chunk_size:
+        return False
 
 
-def combine_chunks(file_details_json):
-    
+def request_chunk_size(chunk):
+    request_chunk_size_json = {'full_hash': chunk['full_file_hash'],
+                               'chunk_id': chunk['chunk']['id'],
+                               'size': True}
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    peer_id = 0
+    while peer_id < len(chunk['peer']):
+        try:
+            s.connect((json.dumps(request_chunk_size_json['peers'][peer_id]['ip']).replace('"', ""), 65432))
+        except Exception:
+            peer_id = peer_id + 1
+            continue
+        s.sendall(bytes(request_chunk_size_json, 'ascii'))
+        try:
+            received_data = int(s.recv(25))
+            return received_data
+        except Exception:
+            peer_id = peer_id + 1
+            continue
+    return False
+# def combine_chunks(file_details_json):
 
 
 def request_file_from_peer(file_hash):
