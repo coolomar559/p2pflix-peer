@@ -9,8 +9,11 @@ def send_request():
 
     config = get_configs()
 
-    if 'guid' not in config:
-        return []
+    if config is None or 'guid' not in config:
+        return {
+            "success": False,
+            "error": "You have no guid!",
+        }
 
     ip_list = get_trackers()
 
@@ -25,7 +28,10 @@ def send_request():
         except Exception:
             print(ip_list[i] + " did not respond!")
     print("there is no working tracker ip!")
-    return []
+    return {
+            "success": False,
+            "error": "Can't connect to any tracker",
+        }
 
 
 # Gets the peer guid from config file

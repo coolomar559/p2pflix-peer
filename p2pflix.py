@@ -2,9 +2,12 @@ from functools import partial
 from pathlib import Path
 import time
 
+import get_file_list
+import get_peer_status
+
 from PyQt5 import QtWidgets, uic
 
-UI_FILE_NAME = "p2pflix-ui.ui"
+UI_FILE_NAME = "./ui/p2pflix-ui.ui"
 ERROR_TITLE = "Error!"
 
 
@@ -26,11 +29,11 @@ class Model:
         return self.tracker_list
 
     def get_file_list(self):
-        self.file_list_dict = test_file_dict
+        self.file_list_dict = get_file_list.request_file_list()
         return self.file_list_dict
 
     def get_my_peer_status(self):
-        self.my_file_list_dict = test_my_file_dict
+        self.my_file_list_dict = get_peer_status.get_status()
         return self.my_file_list_dict
 
     def start_seeding(self):
