@@ -30,7 +30,6 @@ def resolve():
         if file['full_hash'] in peer_list:
             peer_list.remove(file['full_hash'])
         else:
-            print("removing file <" + file['full_hash'] + ">")
             deregister_file(file['full_hash'])
 
     # Remove files from peer the tracker doesn't have
@@ -42,4 +41,9 @@ def resolve():
             try:
                 shutil.rmtree(CHUNK_DIR + file)
             except Exception:
-                print("could not remove file <" + file + ">")
+                return {
+                    "success": False,
+                    "error": "could not remove file <" + file + ">",
+                }
+
+    return {"success": True}

@@ -5,7 +5,7 @@ import requests
 # Gets the list of trackers from tracker.toml,
 # sends requests to ip's in the list until
 # it gets a response
-def send_request():
+def send_status():
 
     config = get_configs()
 
@@ -24,22 +24,10 @@ def send_request():
         try:
             r = requests.get(url, timeout=1)
             if(r.status_code == requests.codes.ok):
-                return r.json()
+                return {"sucess": True}
         except Exception:
-            print(ip_list[i] + " did not respond!")
-    print("there is no working tracker ip!")
+            pass
     return {
             "success": False,
             "error": "Can't connect to any tracker",
         }
-
-
-# Gets the peer guid from config file
-# and queries tracker for peer's files and
-# expected seq_number
-# If no seq_number, returns an empty list
-def get_status():
-
-    response = send_request()
-    print(response)
-    return response

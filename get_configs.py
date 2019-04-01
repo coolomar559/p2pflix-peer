@@ -25,7 +25,10 @@ def get_configs():
         config.read('config.ini')
         return dict(config.items('p2pflix'))
     except Exception:
-        print('error with config.ini')
+        return {
+                "success": False,
+                "error": "Error reading config file",
+            }
 
 
 # Creates a config.ini file and populates it

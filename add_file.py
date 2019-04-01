@@ -68,11 +68,14 @@ def send_request(data, ip='127.0.0.1'):
             r = requests.post(url, json=data, timeout=1)
             if(r.status_code == requests.codes.ok):
                 print(r.json())
-                return r.json()
+                return {'success': True}
         except Exception:
-            print(ip_list[i] + " did not respond!")
+            pass
 
-    return {'success': False}
+    return {
+        'success': False,
+        'error': "Trackers did not respond"
+        }
 
 
 def add_file_r(filename):
@@ -82,8 +85,10 @@ def add_file_r(filename):
         os.mkdir('files')
 
     if(not os.path.exists(filename) or os.path.isdir(filename)):
-        print("file does not exist!")
-        return False
+        return {
+            "success": False,
+            "error": "File does not exist",
+        }
 
     config = get_configs() if os.path.exists('config.ini') else add_seq()
 
@@ -100,6 +105,9 @@ def add_file_r(filename):
         shutil.rmtree('files/' + fullhash)
     else:
         update_seq(response['guid'], data['seq_number'])
-        return True
+        return {"success": True}
 
-    return False
+    return {
+            "success": False,
+            "error": "Error adding file",
+        }

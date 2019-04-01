@@ -22,8 +22,7 @@ def send_request(data, ip='127.0.0.1'):
                 print(r.json())
             return r.json()
         except Exception:
-            print(ip_list[i] + " did not respond!")
-    print("there is no working tracker ip!")
+            pass
 
 
 def deregister_file(file_hash):
@@ -39,3 +38,9 @@ def deregister_file(file_hash):
         update_seq(config['guid'], int(config['seq_number']))
         if(os.path.exists('files/' + file_hash)):
             shutil.rmtree('files/' + file_hash)
+        return {"sucess": True}
+
+    return {
+        "success": False,
+        "error": "could not remove file <" + file_hash + ">",
+    }
