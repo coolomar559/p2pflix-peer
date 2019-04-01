@@ -46,7 +46,7 @@ class Model:
 
     # gets the peer status (hosted files, seq numbers) from the tracker and updates the model
     def get_my_peer_status(self):
-        self.my_file_list_dict = get_peer_status.get_status()
+        self.my_file_list_dict = get_peer_status.send_status()
         return self.my_file_list_dict
 
     # starts the seeding subprocess
