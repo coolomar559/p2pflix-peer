@@ -74,7 +74,7 @@ def send_request(data, ip='127.0.0.1'):
 
     return {
         'success': False,
-        'error': "Trackers did not respond"
+        'error': "Trackers did not respond",
         }
 
 
