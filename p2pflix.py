@@ -247,7 +247,7 @@ def add_file(file_name):
 # loads the tracker list from the config file
 # does not need multithreading
 def choose_tracker():
-    print("call choose_tracker_here")
+    print("Choose tracker")
 
     tracker_list = model.get_tracker_list()
 
@@ -270,7 +270,7 @@ def choose_tracker_ok():
         return
 
     new_ip = selected_item.text()
-    print("chose ip {}".format(new_ip))
+    print("Chose ip {}".format(new_ip))
 
     update_response = get_tracker_list.update_primary_tracker(new_ip)
     if(not update_response["success"]):
@@ -291,10 +291,9 @@ def choose_tracker_cancel():
 
 # Adds a tracker from the manually enter screen
 # does not need multithreading
-# TODO: get tracker's tracker list
 def choose_tracker_add():
     new_ip = ui.tracker_ip_box.text()
-    print("add ip {} to list".format(new_ip))
+    print("Add ip {} to list".format(new_ip))
 
     # need error stuff here
     if(not get_tracker_list.add_tracker_ip_local(new_ip)):
