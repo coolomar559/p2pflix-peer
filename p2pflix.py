@@ -38,12 +38,12 @@ class Model:
 
     # gets the file list from the tracker and updates the model
     def get_file_list(self):
-        self.file_list_dict = get_file_list.request_file_list()
+        self.file_list_dict = get_file_list.get_file_list()
         return self.file_list_dict
 
     # gets the peer status (hosted files, seq numbers) from the tracker and updates the model
     def get_my_peer_status(self):
-        self.my_file_list_dict = get_peer_status.send_status()
+        self.my_file_list_dict = get_peer_status.get_status()
         return self.my_file_list_dict
 
     # starts the seeding subprocess

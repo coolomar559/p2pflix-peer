@@ -5,7 +5,7 @@ import requests
 # Gets the list of trackers from tracker.toml,
 # sends requests to ip's in the list until
 # it gets a response
-def send_status():
+def get_status():
 
     config = get_configs()
 
