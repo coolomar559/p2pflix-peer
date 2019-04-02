@@ -33,10 +33,7 @@ class Model:
     # gets the tracker list and updates the model
     # this probably doesn't need multithreading
     def get_tracker_list(self):
-        self.tracker_list = get_tracker_list.get_t_list()
-        if(not self.tracker_list):
-            self.tracker_list = []
-
+        self.tracker_list = get_tracker_list.get_local_tracker_list()
         return self.tracker_list
 
     # gets the file list from the tracker and updates the model
@@ -341,7 +338,9 @@ def choose_tracker_ok():
     new_ip = selected_item.text()
     print("chose ip {}".format(new_ip))
 
-    # need to select tracker here
+    if(not get_tracker_list.update_primary_tracker(new_ip)):
+        QtWidgets.QMessageBox.about(None, ERROR_TITLE, "Failed to select tracker")
+        return
 
     main_window_index = 0
     ui.ui_stack.setCurrentIndex(main_window_index)
@@ -363,7 +362,9 @@ def choose_tracker_add():
     print("add ip {} to list".format(new_ip))
 
     # need error stuff here
-    get_tracker_list.gui_add_ip_to_toml(new_ip)
+    if(not get_tracker_list.add_tracker_ip_local(new_ip)):
+        QtWidgets.QMessageBox.about(None, ERROR_TITLE, "Failed to add ip")
+        return
 
     ui.tracker_ip_box.clear()
 

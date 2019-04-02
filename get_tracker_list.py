@@ -1,15 +1,111 @@
+import ipaddress
 import json
 import os
+from pathlib import Path
+import pickle
 
 from IPy import IP
 import requests
 import toml
 
 
+TRACKER_FILE = "./tracker_list.dat"
+
+fake_tracker = {
+    "primary": "127.0.0.1",
+    "backups": [
+        "1.1.1.1",
+        "2.2.2.2",
+    ],
+}
+
+
+# creates a new local tracker initialized with a placeholder local
+def create_local_tracker_list():
+    tracker_file_path = Path(TRACKER_FILE)
+
+    with tracker_file_path.open() as tracker_file:
+        tracker_data = {
+            "primary": None,
+            "backups": [],
+        }
+        pickle.dump(tracker_data, tracker_file)
+
+    return
+
+
+# gets a list of local trackers
 def get_local_tracker_list():
-    pass
+    tracker_file_path = Path(TRACKER_FILE)
+
+    if(not tracker_file_path.is_file()):
+        create_local_tracker_list()
+
+    with tracker_file_path.open() as tracker_file:
+        tracker_data = pickle.load(tracker_file)
+        primary_ip = tracker_data["primary"]
+        ip_list = tracker_data["backups"]
+
+        if(primary_ip is not None):
+            ip_list.insert(0, primary_ip)
+
+    return ip_list
 
 
+# adds a new tracker ip to the local list
+def add_tracker_ip_local(ip):
+    try:
+        ipaddress.IPv4Address(ip)
+    except ValueError:
+        return False
+
+    tracker_file_path = Path(TRACKER_FILE)
+
+    if(not tracker_file_path.is_file()):
+        create_local_tracker_list()
+
+    with tracker_file_path.open() as tracker_file:
+        tracker_data = pickle.load(tracker_file)
+        tracker_data["backups"].append[ip]
+        pickle.dump(tracker_data, tracker_file)
+
+    return True
+
+
+# changes the primary tracker in the local list
+def update_primary_tracker(new_primary_ip):
+    try:
+        ipaddress.IPv4Address(new_primary_ip)
+    except ValueError:
+        return False
+
+    tracker_file_path = Path(TRACKER_FILE)
+
+    if(not tracker_file_path.is_file()):
+        create_local_tracker_list()
+
+    with tracker_file_path.open() as tracker_file:
+        tracker_data = pickle.load(tracker_file)
+        old_primary_ip = tracker_data["primary"]
+        backups = tracker_data["backups"]
+
+        if(new_primary_ip in backups):
+            backups.remove(new_primary_ip)
+
+        tracker_data["primary"] = new_primary_ip
+
+        if(old_primary_ip is not None):
+            backups.append[old_primary_ip]
+
+        pickle.dump(tracker_data, tracker_file)
+
+    return True
+
+
+# --- below here be obsolete ---
+
+
+# dead
 def gui_add_ip_to_toml(input_ip):
     if not IP(input_ip):
         return "invalid IP."
@@ -51,6 +147,7 @@ def get_t_list():
     return list_of_ips
 
 
+# dead
 def overwrite_ips_in_toml(list_of_ips):
     my_dict = {'ip': list_of_ips}
     with open('./tracker.toml', 'w') as fp:
@@ -72,6 +169,7 @@ def add_all_trackers(list_of_ips):
     return list_of_ips
 
 
+# dead
 def get_first_t():
     if os.path.exists('./tracker.toml'):
         try:
@@ -97,6 +195,7 @@ def add_trackers(ip):
             print()
 
 
+# dead
 def get_user_input_for_ip():
     print("Couldn't find a tracker.toml file in this directory. Please enter the IP of a tracker")
     while True:
