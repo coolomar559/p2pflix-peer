@@ -3,7 +3,7 @@ import shutil
 
 from deregister_file_by_hash import deregister_file
 from get_configs import get_configs, update_seq
-from get_file_list import request_file_list
+from get_file_list import get_file_list
 from get_peer_status import get_status
 
 
@@ -22,7 +22,7 @@ def resolve():
         update_seq(configs['guid'], expected_seq-1)
 
     # Get tracker and peer file lists
-    tracker_dict = request_file_list()['files']
+    tracker_dict = get_file_list()['files']
     peer_list = os.listdir('files')
 
     # Remove files from tracker that the peer doesn't have

@@ -6,6 +6,10 @@ import requests
 import toml
 
 
+def get_local_tracker_list():
+    pass
+
+
 def gui_add_ip_to_toml(input_ip):
     if not IP(input_ip):
         return "invalid IP."

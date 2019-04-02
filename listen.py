@@ -1,74 +1,86 @@
 # import configparser
-import json
 from os import getcwd
-from os.path import isfile, join
+from os.path import getsize, isfile, join
+import pickle
 import socketserver
 import threading
 import time
 
-import requests
+import constants
+# from get_configs import get_configs
+# from get_tracker_list import get_local_tracker_list
+# import requests
 
 
 class RequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
-        data = str(self.request.recv(1024), 'ascii')
-        request_json = json.JSONDecoder().decode(data)
-        print("I got me a request.\n")
-        print(data)
+        data = self.request.recv(1024)
+        request = pickle.loads(data)
 
-        hsh = request_json["full_hash"]
-        chnk = request_json["chunk_id"]
-        fname = hsh + '#' + str(chnk)
-        fdir = join(hsh, fname)
+        full_hash = request["full_hash"]
+        chunk_id = request["chunk_id"]
+        file_name = f"{full_hash}#{chunk_id}"
+        file_tail = join(full_hash, file_name)
 
         # TODO: THIS NEEDS TO COME FROM A CONFIG FILE
-        filepath = getcwd() + '/files/'
+        files_directory = getcwd() + "/files/"
 
-        absdir = join(filepath, fdir)
-        print(isfile(absdir))
-        if isfile(absdir):
+        full_path = join(files_directory, file_tail)
+        if isfile(full_path):
             try:
-                f = open(absdir, 'rb')
-                print("Success")
-                self.request.sendall(f.read())
-                return
-            except IOError:
-                print("Failed to open")
-        else:
-            print("No file here")
+                # First, send the size of the chunk
+                file_size = getsize(full_path)
+                self.request.sendall(pickle.dumps(file_size))
+                print("sent file size")
 
-        response = -1
-        self.request.sendall(response)
-        return
+                # Then send the chunk
+                f = open(full_path, "rb")
+                self.request.sendall(f.read())
+                print("sent file")
+                return
+            except EnvironmentError:
+                print("Could not access file")
+        else:
+            print(f"Could not find file {full_path}")
+
+        self.request.sendall(pickle.dumps(-1))
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
 
-def seed():
-    ip = 'localhost'
-    port = 65432
+class SeedThread(threading.Thread):
+    def __init__(self, listening_callback, error_callback, shutdown_callback):
+        self.listening_callback = listening_callback
+        self.error_callback = error_callback
+        self.shutdown_callback = shutdown_callback
+        self._stopped_event = threading.Event()
+        super().__init__()
 
-    server = ThreadedTCPServer((ip, port), RequestHandler)
+    def stop(self):
+        self._stopped_event.set()
 
-    t = threading.Thread(target=server.serve_forever)
-    t.daemon = True
-    t.start()
-    print("Server loop running")
+    def run(self):
+        ip = constants.LISTEN_IP
+        port = constants.PEER_PORT
 
-# TODO: This needs to come from the config file
-#    config = get_configs()
-#    data['guid'] = config['guid']
-    data = {'guid': 1}
-    try:
-        alive = True
-        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        server = ThreadedTCPServer((ip, port), RequestHandler)
 
-        while alive:
+        t = threading.Thread(target=server.serve_forever)
+        t.daemon = True
+        t.start()
+        self.listening_callback()
+
+        # config = get_configs()
+        # guid = config['guid']
+
+        while not self._stopped():
             time.sleep(60)
-            requests.put('http://127.0.0.1:42069/keep_alive', json.dumps(data), headers=headers)
-    except KeyboardInterrupt:
-        print("Shutdown Initiated.")
+            # requests.put('http://127.0.0.1:42069/keep_alive', json.dumps(data),
+            # headers=headers)
 
-    server.shutdown()
+        server.shutdown()
+
+    def _stopped(self):
+        self._stopped_event.is_set()

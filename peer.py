@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+from pprint import pprint
+
 from add_file import add_file_r
+import constants
 from deregister_file_by_hash import deregister_file
 from discrepancy_resolution import resolve
 import fire
-from get_file_list import request_file_from_peer, request_file_list
+from get_file import download_file, get_file_info
+from get_file_list import get_file_list
 from get_peer_status import get_status
-from listen import seed
+# from listen import seed
 
 
 def add_file(file_name: str) -> None:
@@ -20,26 +24,43 @@ def deregister_file_by_hash(file_hash: str) -> None:
     deregister_file(file_hash)
 
 
-def get_file_list():
-    request_file_list()
+def list_files():
+    file_list = get_file_list()
+    if file_list["success"]:
+        pprint(file_list["files"])
+    else:
+        print(file_list["error"])
 
 
 def get_peer_status():
     get_status()
 
 
-def get_file(file_id: str) -> None:
-    request_file_from_peer(file_id)
+def get_file(fhash):
+    file_info = get_file_info(fhash)
+
+    if not file_info["success"]:
+        print(file_info["error"])
+
+    if download_file(file_info):
+        print("File downloaded successfully")
+    else:
+        print("There was an error downloading the file")
 
 
 def listen():
-    seed()
+    pass
+    # seed(successful_listen)
+
+
+def successful_listen():
+    print(f"Listening on port {constants.PEER_PORT}")
 
 
 if __name__ == "__main__":
     fire.Fire({
         'add-file': add_file,
-        'get-file-list': get_file_list,
+        'list-files': list_files,
         'get-file': get_file,
         'listen': listen,
         'deregister-file-by-hash': deregister_file_by_hash,
