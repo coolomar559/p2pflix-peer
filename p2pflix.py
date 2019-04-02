@@ -6,6 +6,7 @@ from pathlib import Path
 
 import add_file as add_file_module
 import deregister_file_by_hash
+import get_file as get_file_module
 import get_file_list
 import get_peer_status
 import get_tracker_list
@@ -47,78 +48,14 @@ class Model:
         return self.my_file_list_dict
 
     # starts the seeding subprocess
+    # TODO: seed
     def start_seeding(self):
         print("started seeding")
 
     # stops the seeding subprocess
+    # TODO: stop seed
     def stop_seeding(self):
         print("stopped seeding")
-
-
-# TODO: remove this
-test_file_dict = {
-    "success": True,
-    "files": [
-        {
-            "id": 1,
-            "name": "avengers_XVID.mp4",
-            "hash": "ajkhjksdksffs",
-            "active_peers": 10,
-        },
-        {
-            "id": 2,
-            "name": "avengers_2_XVID.mp4",
-            "hash": "ajkhjkasdasdsdksffs",
-            "active_peers": 2,
-        },
-        {
-            "id": 3,
-            "name": "bush_doing_9-11_XVID.mp4",
-            "hash": "ajjhgkjkhjksdksffs",
-            "active_peers": 3,
-        },
-        {
-            "id": 4,
-            "name": "YEEEEEEEEEEEEEEEEEEEEEEEEEEEEET.mp4",
-            "hash": "ajadagggkhjksdksffs",
-            "active_peers": 100,
-        },
-    ],
-}
-
-# TODO: remove this
-test_my_file_dict = {
-    "success": True,
-    "files": [
-        {
-            "id": 1,
-            "name": "shut_up_your_mouse_obama.flac",
-            "hash": "hahahaheeeheeeheeeeee",
-        },
-        {
-            "id": 2,
-            "name": "shut_up_your_mouse_2_electric_boogaloo.flac",
-            "hash": "here_come_dat_boi",
-        },
-    ],
-    "expected_seq_number": 0,
-    "ka_expected_seq_number": 0,
-}
-
-# TODO: remove this
-test_tracker_list = [
-    "53.180.128.225",
-    "154.23.221.244",
-    "30.136.157.9",
-    "82.107.143.217",
-    "201.29.142.114",
-    "144.59.12.133",
-    "162.155.32.59",
-    "49.68.33.160",
-]
-
-# TODO: remove this
-test_tracker_list_2 = []
 
 
 # --- UI stuff that does need multithreading ---
@@ -216,10 +153,10 @@ def get_file_hook(file_hash, file_name):
 
 # downloads a file from another peer
 # this should be given to a thread
-# TODO: implement the download bar properly, wait on omar's changes
+# TODO: implement the download bar properly
 def get_file(file_hash, file_name):
     # TODO: fix this
-    file_metadata = get_file_list.request_file_details_from_tracker(file_hash)
+    file_metadata = get_file_module.get_file_info(file_hash)
 
     progress_bar = ui.download_bar
     label = ui.download_label
@@ -231,7 +168,7 @@ def get_file(file_hash, file_name):
 
     track_progress(Path("./"), progress_bar, 10)
 
-    # get_file_list.get_full_file(file_metadata)  # make a thread do this
+    get_file_module.download(file_metadata)  # make a thread do this
 
     # await/kill track progress
     QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(file_name))
@@ -264,7 +201,6 @@ def deregister_file_hook(file_hash):
 
 # deregisters you as a host for a file
 # this should be given to a thread
-# TODO: await zia's error changes
 def deregister_file(file_hash):
     response = deregister_file_by_hash.deregister_file(file_hash)
 
@@ -292,7 +228,6 @@ def add_file_hook():
 
 # adds a file to the tracker
 # this should be given to a thread
-# TODO: await zia's error changes
 def add_file(file_name):
     response = add_file_module.add_file_r(file_name)
 
@@ -327,7 +262,6 @@ def choose_tracker():
 
 # selects a tracker and adds it to the list
 # this probably doesn't need multithreading
-# TODO: waiting for omar's code changes
 def choose_tracker_ok():
     selected_item = ui.tracker_list.currentItem()
 
@@ -356,7 +290,7 @@ def choose_tracker_cancel():
 
 # Adds a tracker from the manually enter screen
 # does not need multithreading
-# TODO: wait for omar's error stuff
+# TODO: get tracker's tracker list
 def choose_tracker_add():
     new_ip = ui.tracker_ip_box.text()
     print("add ip {} to list".format(new_ip))
@@ -368,7 +302,7 @@ def choose_tracker_add():
 
     ui.tracker_ip_box.clear()
 
-    tracker_list = test_tracker_list
+    tracker_list = model.get_tracker_list()
     ui.tracker_list.clear()
     ui.tracker_list.addItems(tracker_list)
 

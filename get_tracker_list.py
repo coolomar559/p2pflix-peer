@@ -24,7 +24,7 @@ fake_tracker = {
 def create_local_tracker_list():
     tracker_file_path = Path(TRACKER_FILE)
 
-    with tracker_file_path.open() as tracker_file:
+    with tracker_file_path.open(mode="wb") as tracker_file:
         tracker_data = {
             "primary": None,
             "backups": [],
@@ -41,7 +41,7 @@ def get_local_tracker_list():
     if(not tracker_file_path.is_file()):
         create_local_tracker_list()
 
-    with tracker_file_path.open() as tracker_file:
+    with tracker_file_path.open(mode="rb") as tracker_file:
         tracker_data = pickle.load(tracker_file)
         primary_ip = tracker_data["primary"]
         ip_list = tracker_data["backups"]
@@ -64,10 +64,12 @@ def add_tracker_ip_local(ip):
     if(not tracker_file_path.is_file()):
         create_local_tracker_list()
 
-    with tracker_file_path.open() as tracker_file:
+    with tracker_file_path.open(mode="r+b") as tracker_file:
         tracker_data = pickle.load(tracker_file)
-        tracker_data["backups"].append[ip]
+        tracker_data["backups"].append(ip)
+        tracker_file.seek(0)
         pickle.dump(tracker_data, tracker_file)
+        print(tracker_data)
 
     return True
 
@@ -84,7 +86,7 @@ def update_primary_tracker(new_primary_ip):
     if(not tracker_file_path.is_file()):
         create_local_tracker_list()
 
-    with tracker_file_path.open() as tracker_file:
+    with tracker_file_path.open("r+b") as tracker_file:
         tracker_data = pickle.load(tracker_file)
         old_primary_ip = tracker_data["primary"]
         backups = tracker_data["backups"]
@@ -97,6 +99,7 @@ def update_primary_tracker(new_primary_ip):
         if(old_primary_ip is not None):
             backups.append[old_primary_ip]
 
+        tracker_file.seek(0)
         pickle.dump(tracker_data, tracker_file)
 
     return True
