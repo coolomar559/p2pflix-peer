@@ -58,7 +58,7 @@ def send_request(data):
             r = requests.post(
                 f"http://{ip}:{constants.TRACKER_PORT}/add_file",
                 timeout=constants.REQUEST_TIMEOUT,
-                json=data
+                json=data,
             )
             r.raise_for_status()
             return r.json()

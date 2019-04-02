@@ -171,7 +171,7 @@ def get_file(file_hash, file_name):
     label.setText("Downloading {}".format(file_name))
     progress_bar.setValue(0)
 
-    track_progress(Path(constants.CHUNK_DOWNLOAD_FOLDER), progress_bar, chunk_count) # make a thread do this
+    track_progress(Path(constants.CHUNK_DOWNLOAD_FOLDER), progress_bar, chunk_count)  # make a thread do this
 
     get_file_module.download(file_metadata)
 
@@ -198,8 +198,6 @@ def track_progress(directory, progress_bar, chunk_count):
     progress_bar.setValue(progress)
 
     return
-
-    
 
 
 # deregisters you as a host for a file
