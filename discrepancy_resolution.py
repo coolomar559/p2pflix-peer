@@ -1,13 +1,11 @@
 import os
 import shutil
 
+import constants
 from deregister_file_by_hash import deregister_file
 from get_configs import get_configs, update_seq
 from get_file_list import get_file_list
 from get_peer_status import get_status
-
-
-CHUNK_DIR = os.path.join(os.getcwd(), 'files/')
 
 
 def resolve():
@@ -39,7 +37,7 @@ def resolve():
     for file in peer_list:
         if file not in tracker_list:
             try:
-                shutil.rmtree(CHUNK_DIR + file)
+                shutil.rmtree(constants.CHUNK_DIRECTORY + file)
             except Exception:
                 return {
                     "success": False,

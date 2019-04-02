@@ -1,6 +1,7 @@
 import os
 import shutil
 
+import constants
 from get_configs import get_configs, update_seq
 from get_tracker_list import get_local_tracker_list
 import requests
@@ -12,18 +13,22 @@ import requests
 def send_request(data, ip='127.0.0.1'):
 
     ip_list = get_local_tracker_list()
-
-    port = 42069
-    for i in range(0, len(ip_list)):
-        ip = ip_list[i]
-        url = 'http://' + str(ip) + ':' + str(port) + '/deregister_file_by_hash'
+    for ip in ip_list:
         try:
-            r = requests.delete(url, json=data, timeout=1)
-            if(r.status_code == requests.codes.ok):
-                print(r.json())
+            r = requests.delete(
+                f"http://{ip}:{constants.TRACKER_PORT}/deregister_file_by_hash",
+                timeout=constants.REQUEST_TIMEOUT,
+                json=data,
+            )
+            r.raise_for_status()
             return r.json()
-        except Exception:
-            pass
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError):
+            continue
+
+    return {
+        'success': False,
+        'error': "No trackers available",
+    }
 
 
 def deregister_file(file_hash):
@@ -35,7 +40,7 @@ def deregister_file(file_hash):
     data['guid'] = config['guid']
     data['seq_number'] = int(config['seq_number'])
 
-    if (send_request(data)['success'] is True):
+    if (send_request(data)['success']):
         update_seq(config['guid'], int(config['seq_number']))
         if(os.path.exists('files/' + file_hash)):
             shutil.rmtree('files/' + file_hash)

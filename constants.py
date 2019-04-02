@@ -8,3 +8,5 @@ LISTEN_IP = '0.0.0.0'  # Seeder should listen on all interfaces by default
 CHUNK_DOWNLOAD_FOLDER = "./.chunks/"  # location of temporary downloading chunks
 KEEPALIVE_TIME = 60  # Keepalive every 60 seconds
 CHUNK_DIRECTORY = Path(getcwd()).joinpath('files')  # Default storing chunks for seeding to ./files/
+CHUNK_SIZE = 1000000    # Size of the chunks
+BLOCK_SIZE = 4096       # Block size for hashing iteratively

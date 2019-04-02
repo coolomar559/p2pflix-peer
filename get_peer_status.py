@@ -1,3 +1,4 @@
+import constants
 from get_configs import get_configs
 from get_tracker_list import get_local_tracker_list
 import requests
@@ -17,17 +18,17 @@ def get_status():
         }
 
     ip_list = get_local_tracker_list()
-
-    port = 42069
-    for i in range(0, len(ip_list)):
-        ip = ip_list[i]
-        url = 'http://' + str(ip) + ':' + str(port) + '/peer_status' + '/' + config['guid']
+    for ip in ip_list:
         try:
-            r = requests.get(url, timeout=1)
-            if(r.status_code == requests.codes.ok):
-                return {"sucess": True}
-        except Exception:
-            pass
+            r = requests.get(
+                f"http://{ip}:{constants.TRACKER_PORT}/peer_status/{config['guid']}",
+                timeout=constants.REQUEST_TIMEOUT,
+            )
+            r.raise_for_status()
+            return r.json()
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError):
+            continue
+
     return {
             "success": False,
             "error": "Can't connect to any tracker",

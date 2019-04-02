@@ -8,15 +8,12 @@ from get_configs import add_seq, get_configs, update_seq
 from get_tracker_list import get_local_tracker_list
 import requests
 
-CHUNK_SIZE = 1000000
-BLOCK_SIZE = 4096
-
 
 # Returns hash of the full file
 def get_full_hash(filename):
     full_hash = hashlib.sha256()
     with open(filename, 'rb') as f:
-        for block in iter(lambda: f.read(BLOCK_SIZE), b''):
+        for block in iter(lambda: f.read(constants.BLOCK_SIZE), b''):
             full_hash.update(block)
     return full_hash.hexdigest()
 
@@ -35,7 +32,7 @@ def chunk_file(filename, fhash):
         # collect file data for all the chunks (name, hash, id)
         chunks = []
         chunk_id = 0
-        for chunk in iter(lambda: f.read(CHUNK_SIZE), b''):
+        for chunk in iter(lambda: f.read(constants.CHUNK_SIZE), b''):
             chunk_data = {}
             chunk_data['id'] = chunk_id
             chunk_data['name'] = fhash + '#' + str(chunk_id)
