@@ -87,7 +87,6 @@ class SeedThread(threading.Thread):
             self.stop()
 
         while not self.stopped_event.is_set():
-            self.stopped_event.wait(constants.KEEPALIVE_TIME)
             data = {
                 "guid": config["guid"],
                 "ka_seq_number": ka_seq.get_ka_seq(),
@@ -100,6 +99,7 @@ class SeedThread(threading.Thread):
                 continue
 
             ka_seq.increment_ka_seq()
+            self.stopped_event.wait(constants.KEEPALIVE_TIME)
 
         server.shutdown()
         self.shutdown_callback()
