@@ -1,6 +1,5 @@
 from concurrent import futures
 import hashlib
-import os
 import pickle
 import socket
 
@@ -31,6 +30,9 @@ def get_file_info(fhash):
 # Download the given file with the given number of threads
 # Returns true on successful download and false otherwise
 def download_file(file_details_json, num_of_threads=4):
+    # Make sure the chunk directory exists
+    constants.CHUNK_DOWNLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+
     # Return false if we failed to download the chunks
     if not download_many(file_details_json, num_of_threads):
         return False
@@ -78,12 +80,12 @@ def download_many(file_details_json, num_of_threads):
 
 # Combine the individual chunk files back into the original file
 def combine_chunks(file_details_json):
-    with open(file_details_json['name'], 'ab') as full_file:
+    with open(file_details_json['name'], 'wb') as full_file:
         for chunk in file_details_json['chunks']:
-            chunk_file = open(chunk['name'], 'rb')
+            chunk_file = open(constants.CHUNK_DOWNLOAD_FOLDER / chunk['name'], 'rb')
             chunk_data = chunk_file.read()
             chunk_file.close()
-            os.remove(chunk['name'])
+            (constants.CHUNK_DOWNLOAD_FOLDER / chunk['name']).unlink()
             full_file.write(chunk_data)
 
 
@@ -118,7 +120,7 @@ def download_one_chunk(chunk):
                 continue
 
             # Write the data to file
-            with open(chunk['chunk']['name'], 'wb') as chunk_file:
+            with open(constants.CHUNK_DOWNLOAD_FOLDER / chunk['chunk']['name'], 'wb') as chunk_file:
                 chunk_file.write(chunk_data)
 
             return True
