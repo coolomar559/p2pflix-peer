@@ -1,15 +1,14 @@
 import hashlib
 import os
+from pathlib import Path
 import shutil
 
+import constants
 from get_configs import add_seq, get_configs, update_seq
 from get_tracker_list import get_local_tracker_list
 import requests
 
-
 CHUNK_SIZE = 1000000
-APP_DIR = os.getcwd()
-CHUNK_DIR = os.path.join(os.getcwd(), 'files/')
 BLOCK_SIZE = 4096
 
 
@@ -29,12 +28,8 @@ def chunk_file(filename, fhash):
     with open(filename, 'rb') as f:
 
         # Create directory to store chunks
-        new_dir = CHUNK_DIR + fhash
-        try:
-            os.mkdir(new_dir)
-        except Exception:
-            print('Could not create directory!')
-            exit(-1)
+        new_dir = Path(constants.CHUNK_DIRECTORY) / fhash
+        new_dir.mkdir(parents=True, exist_ok=True)
 
         # Chunk file, save chunks to chunk directory and
         # collect file data for all the chunks (name, hash, id)
@@ -47,45 +42,38 @@ def chunk_file(filename, fhash):
             chunk_data['hash'] = hashlib.sha256(chunk).hexdigest()
             chunks.append(chunk_data)
 
-            chunk_filename = new_dir + '/' + chunk_data['name']
-            chunk_file = open(chunk_filename, 'wb')
-            chunk_file.write(chunk)
-            chunk_file.close()
+            chunk_filename = new_dir / chunk_data['name']
+            with open(chunk_filename, 'wb') as chunk_file:
+                chunk_file.write(chunk)
 
             chunk_id += 1
 
     return chunks
 
 
-def send_request(data, ip='127.0.0.1'):
-
+def send_request(data):
     ip_list = get_local_tracker_list()
-
-    port = 42069
-    for i in range(0, len(ip_list)):
-        ip = ip_list[i]
-        url = 'http://' + str(ip) + ':' + str(port) + '/add_file'
+    for ip in ip_list:
         try:
-            r = requests.post(url, json=data, timeout=1)
-            if(r.status_code == requests.codes.ok):
-                print(r.json())
-                return {'success': True}
-        except Exception:
-            pass
+            r = requests.post(
+                f"http://{ip}:{constants.TRACKER_PORT}/add_file",
+                timeout=constants.REQUEST_TIMEOUT,
+                json=data
+            )
+            r.raise_for_status()
+            return r.json()
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError):
+            continue
 
     return {
         'success': False,
-        'error': "Trackers did not respond",
-        }
+        'error': "No trackers available",
+    }
 
 
 def add_file_r(filename):
-
-    # If file directory does not exists, create one
-    if (not os.path.exists('files')):
-        os.mkdir('files')
-
-    if(not os.path.exists(filename) or os.path.isdir(filename)):
+    file = Path(filename)
+    if not file.is_file():
         return {
             "success": False,
             "error": "File does not exist",
@@ -106,9 +94,5 @@ def add_file_r(filename):
         shutil.rmtree('files/' + fullhash)
     else:
         update_seq(response['guid'], data['seq_number'])
-        return {"success": True}
 
-    return {
-            "success": False,
-            "error": "Error adding file",
-        }
+    return response
