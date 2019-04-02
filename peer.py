@@ -16,7 +16,7 @@ from listen import SeedThread
 def add_file(file_name):
     result = add_file_r(file_name)
     if result["success"]:
-        print("Successfully updated primary tracker")
+        print("Successfully added file to tracker")
     else:
         print(result["error"])
 

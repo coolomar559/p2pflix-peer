@@ -82,7 +82,11 @@ class SeedThread(threading.Thread):
             self.error_callback(config["error"])
             self.stop()
 
-        while not self.stopped_event.isSet:
+        if "guid" not in config:
+            self.error_callback("Peer does not have GUID")
+            self.stop()
+
+        while not self.stopped_event.is_set():
             self.stopped_event.wait(constants.KEEPALIVE_TIME)
             data = {
                 "guid": config["guid"],

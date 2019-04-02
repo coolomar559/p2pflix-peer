@@ -79,8 +79,6 @@ def update_primary_tracker(new_primary_ip):
 
     pull_response = pull_remote_tracker_list(new_primary_ip)
 
-    print(pull_response)
-
     if(not pull_response["success"]):
         return {
             "success": False,

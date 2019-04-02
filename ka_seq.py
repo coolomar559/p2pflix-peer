@@ -30,9 +30,9 @@ def increment_ka_seq():
     ka_path = check_ka_file()
 
     with open(ka_path, "r+b") as fd:
-        num = pickle.load(ka_path)
+        num = pickle.load(fd)
         fd.seek(0)
-        pickle.dump(num + 1, ka_path)
+        pickle.dump(num + 1, fd)
 
     return num
 
