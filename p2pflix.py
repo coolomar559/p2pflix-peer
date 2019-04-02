@@ -5,6 +5,7 @@ from pathlib import Path
 # import time
 
 import add_file as add_file_module
+import constants
 import deregister_file_by_hash
 import get_file as get_file_module
 import get_file_list
@@ -155,8 +156,12 @@ def get_file_hook(file_hash, file_name):
 # this should be given to a thread
 # TODO: implement the download bar properly
 def get_file(file_hash, file_name):
-    # TODO: fix this
     file_metadata = get_file_module.get_file_info(file_hash)
+    if(not file_metadata["success"]):
+        QtWidgets.QMessageBox.about(None, ERROR_TITLE, file_metadata["error"])
+        return
+
+    chunk_count = len(file_metadata["chunks"])
 
     progress_bar = ui.download_bar
     label = ui.download_label
@@ -166,11 +171,12 @@ def get_file(file_hash, file_name):
     label.setText("Downloading {}".format(file_name))
     progress_bar.setValue(0)
 
-    track_progress(Path("./"), progress_bar, 10)
+    track_progress(Path(constants.CHUNK_DOWNLOAD_FOLDER), progress_bar, chunk_count) # make a thread do this
 
-    get_file_module.download(file_metadata)  # make a thread do this
+    get_file_module.download(file_metadata)
 
     # await/kill track progress
+
     QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(file_name))
 
     ui.download_container.setEnabled(False)
@@ -180,13 +186,20 @@ def get_file(file_hash, file_name):
 
 
 # handles incrementing the progress bar
-# TODO: have this work based on files in the directory
 def track_progress(directory, progress_bar, chunk_count):
     progress = 0
-    while(progress < 100):
-        # time.sleep(1)
-        progress += 0.00001
+    files_in_directory = len(list(directory.iterdir()))
+    while(files_in_directory < chunk_count):
+        progress = int((files_in_directory/chunk_count)*100)
         progress_bar.setValue(progress)
+        files_in_directory = len(list(directory.iterdir()))
+
+    progress = int((files_in_directory/chunk_count)*100)
+    progress_bar.setValue(progress)
+
+    return
+
+    
 
 
 # deregisters you as a host for a file
