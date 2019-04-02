@@ -1,15 +1,14 @@
-# import configparser
 from os import getcwd
 from os.path import getsize, isfile, join
 import pickle
 import socketserver
 import threading
-import time
 
 import constants
-# from get_configs import get_configs
-# from get_tracker_list import get_local_tracker_list
-# import requests
+from get_configs import get_configs
+from get_tracker_list import get_local_tracker_list
+import ka_seq
+import requests
 
 
 class RequestHandler(socketserver.BaseRequestHandler):
@@ -55,11 +54,11 @@ class SeedThread(threading.Thread):
         self.listening_callback = listening_callback
         self.error_callback = error_callback
         self.shutdown_callback = shutdown_callback
-        self._stopped_event = threading.Event()
+        self.stopped_event = threading.Event()
         super().__init__()
 
     def stop(self):
-        self._stopped_event.set()
+        self.stopped_event.set()
 
     def run(self):
         ip = constants.LISTEN_IP
@@ -72,15 +71,28 @@ class SeedThread(threading.Thread):
         t.start()
         self.listening_callback()
 
-        # config = get_configs()
-        # guid = config['guid']
+        config = get_configs()
+        if "success" in config and not config["success"]:
+            self.error_callback(config["error"])
+            self.stop()
 
-        while not self._stopped():
-            time.sleep(60)
-            # requests.put('http://127.0.0.1:42069/keep_alive', json.dumps(data),
-            # headers=headers)
+        while not self.stopped_event.isSet:
+            self.stopped_event.wait(constants.KEEPALIVE_TIME)
+            data = {
+                "guid": config["guid"],
+                "ka_seq_number": ka_seq.get_ka_seq(),
+            }
+            tracker_ips = get_local_tracker_list()
+            for tracker_ip in tracker_ips:
+                try:
+                    requests.put(f'http://:{constants.TRACKER_PORT}/keep_alive', json=data)
+                    r.raise_for_status()
+                    return r.json()
+                except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError) as e:
+                    return {
+                        "success": False,
+                        "error": str(e),
+                    }
 
+        self.shutdown_callback()
         server.shutdown()
-
-    def _stopped(self):
-        self._stopped_event.is_set()
