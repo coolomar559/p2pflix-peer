@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 from pprint import pprint
 
-from add_file import add_file_r
-import constants
-from deregister_file_by_hash import deregister_file
-from discrepancy_resolution import resolve
+from backend import constants
+from backend.add_file import add_file_r
+from backend.deregister_file_by_hash import deregister_file
+from backend.discrepancy_resolution import resolve
+from backend.get_file import download_file, get_file_info
+from backend.get_file_list import get_file_list
+from backend.get_peer_status import get_status
+from backend.get_tracker_list import update_primary_tracker
+from backend.listen import SeedThread
 import fire
-from get_file import download_file, get_file_info
-from get_file_list import get_file_list
-from get_peer_status import get_status
-from get_tracker_list import update_primary_tracker
-from listen import SeedThread
 
 
 def add_file(file_name):

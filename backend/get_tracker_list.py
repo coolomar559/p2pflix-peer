@@ -2,7 +2,7 @@ import ipaddress
 from pathlib import Path
 import pickle
 
-import constants
+from backend import constants
 import requests
 
 

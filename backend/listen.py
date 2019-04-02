@@ -3,10 +3,9 @@ import pickle
 import socketserver
 import threading
 
-import constants
-from get_configs import get_configs
-from get_tracker_list import get_local_tracker_list
-import ka_seq
+from backend import constants, ka_seq
+from backend.get_configs import get_configs
+from backend.get_tracker_list import get_local_tracker_list
 import requests
 
 

@@ -1,9 +1,9 @@
 import os
 import shutil
 
-import constants
-from get_configs import get_configs, update_seq
-from get_tracker_list import get_local_tracker_list
+from backend import constants
+from backend.get_configs import get_configs, update_seq
+from backend.get_tracker_list import get_local_tracker_list
 import requests
 
 

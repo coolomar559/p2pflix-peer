@@ -4,8 +4,8 @@ import os
 import pickle
 import socket
 
-import constants
-from get_tracker_list import get_local_tracker_list
+from backend import constants
+from backend.get_tracker_list import get_local_tracker_list
 import requests
 
 

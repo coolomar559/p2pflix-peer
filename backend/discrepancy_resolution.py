@@ -1,11 +1,11 @@
 import os
 import shutil
 
-import constants
-from deregister_file_by_hash import deregister_file
-from get_configs import get_configs, update_seq
-from get_file_list import get_file_list
-from get_peer_status import get_status
+from backend import constants
+from backend.deregister_file_by_hash import deregister_file
+from backend.get_configs import get_configs, update_seq
+from backend.get_file_list import get_file_list
+from backend.get_peer_status import get_status
 
 
 def resolve():
