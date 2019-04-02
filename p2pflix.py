@@ -272,8 +272,9 @@ def choose_tracker_ok():
     new_ip = selected_item.text()
     print("chose ip {}".format(new_ip))
 
-    if(not get_tracker_list.update_primary_tracker(new_ip)):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, "Failed to select tracker")
+    update_response = get_tracker_list.update_primary_tracker(new_ip)
+    if(not update_response["success"]):
+        QtWidgets.QMessageBox.about(None, ERROR_TITLE, update_response["error"])
         return
 
     main_window_index = 0
