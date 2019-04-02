@@ -1,4 +1,5 @@
-from get_configs import get_configs, get_trackers
+from get_configs import get_configs
+from get_tracker_list import get_local_tracker_list
 import requests
 
 
@@ -15,7 +16,7 @@ def get_status():
             "error": "You have no guid!",
         }
 
-    ip_list = get_trackers()
+    ip_list = get_local_tracker_list()
 
     port = 42069
     for i in range(0, len(ip_list)):

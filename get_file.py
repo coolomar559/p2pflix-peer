@@ -19,11 +19,8 @@ def get_file_info(fhash):
             )
             r.raise_for_status()
             return r.json()
-        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError) as e:
-            return {
-                "success": False,
-                "error": str(e),
-            }
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout, ValueError):
+            continue
 
     return {
         "success": False,

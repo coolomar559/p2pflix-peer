@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from pprint import pprint
-from threading import Event
 
 from add_file import add_file_r
 import constants
@@ -10,18 +9,23 @@ import fire
 from get_file import download_file, get_file_info
 from get_file_list import get_file_list
 from get_peer_status import get_status
+from get_tracker_list import update_primary_tracker
 from listen import SeedThread
 
 
-def add_file(file_name: str) -> None:
-    add_file_r(file_name)
+def add_file(file_name):
+    result = add_file_r(file_name)
+    if result["success"]:
+        print("Successfully updated primary tracker")
+    else:
+        print(result["error"])
 
 
 def resolve_discrepancy():
     resolve()
 
 
-def deregister_file_by_hash(file_hash: str) -> None:
+def deregister_file_by_hash(file_hash):
     deregister_file(file_hash)
 
 
@@ -37,8 +41,8 @@ def get_peer_status():
     get_status()
 
 
-def get_file(fhash):
-    file_info = get_file_info(fhash)
+def get_file(file_hash):
+    file_info = get_file_info(file_hash)
 
     if not file_info["success"]:
         print(file_info["error"])
@@ -64,6 +68,14 @@ def listen():
         seeder.join()
 
 
+def set_primary_tracker(tracker_ip):
+    result = update_primary_tracker(tracker_ip)
+    if result["success"]:
+        print("Successfully updated primary tracker")
+    else:
+        print(result["error"])
+
+
 def seeder_listening():
     print(f"Listening on port {constants.PEER_PORT}")
 
@@ -73,7 +85,7 @@ def seeder_error(error):
 
 
 def seeder_shutdown():
-    print("\nSeeder shutting down")
+    print("\nSeeder shut down")
 
 
 if __name__ == "__main__":
@@ -82,7 +94,8 @@ if __name__ == "__main__":
         'list-files': list_files,
         'get-file': get_file,
         'listen': listen,
-        'deregister-file-by-hash': deregister_file_by_hash,
+        'deregister-file': deregister_file_by_hash,
         'get-peer-status': get_peer_status,
         'discrepancy-resolution': resolve,
+        'set-primary-tracker': set_primary_tracker,
     })

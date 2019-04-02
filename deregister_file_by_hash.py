@@ -1,7 +1,8 @@
 import os
 import shutil
 
-from get_configs import get_configs, get_trackers, update_seq
+from get_configs import get_configs, update_seq
+from get_tracker_list import get_local_tracker_list
 import requests
 
 
@@ -10,7 +11,7 @@ import requests
 # it gets a response
 def send_request(data, ip='127.0.0.1'):
 
-    ip_list = get_trackers()
+    ip_list = get_local_tracker_list()
 
     port = 42069
     for i in range(0, len(ip_list)):
