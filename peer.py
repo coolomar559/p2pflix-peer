@@ -25,7 +25,7 @@ def resolve_discrepancy():
     pprint(resolve())
 
 
-def deregister_file_by_hash(file_hash):
+def deregister(file_hash):
     pprint(deregister_file(file_hash))
 
 
@@ -96,12 +96,12 @@ def download_progress_callback(success):
 
 if __name__ == "__main__":
     fire.Fire({
-        'add-file': add_file,
-        'list-files': list_files,
-        'get-file': get_file,
-        'listen': listen,
-        'deregister-file': deregister_file_by_hash,
-        'get-peer-status': get_peer_status,
-        'discrepancy-resolution': resolve,
-        'set-primary-tracker': set_primary_tracker,
+        "add-file": add_file,
+        "list-files": list_files,
+        "get-file": get_file,
+        "listen": listen,
+        "deregister-file": deregister,
+        "get-peer-status": get_peer_status,
+        "discrepancy-resolution": resolve,
+        "set-primary-tracker": set_primary_tracker,
     })

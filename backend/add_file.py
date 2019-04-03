@@ -12,8 +12,8 @@ import requests
 # Returns hash of the full file
 def get_full_hash(filename):
     full_hash = hashlib.sha256()
-    with open(filename, 'rb') as f:
-        for block in iter(lambda: f.read(constants.BLOCK_SIZE), b''):
+    with open(filename, "rb") as f:
+        for block in iter(lambda: f.read(constants.BLOCK_SIZE), b""):
             full_hash.update(block)
     return full_hash.hexdigest()
 
@@ -22,7 +22,7 @@ def get_full_hash(filename):
 # 2. Saves the chunks into the 'Files' directory
 # 3. Returns the hashes of the chunk files
 def chunk_file(filename, fhash):
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
 
         # Create directory to store chunks
         new_dir = Path(constants.CHUNK_DIRECTORY) / fhash
@@ -32,15 +32,15 @@ def chunk_file(filename, fhash):
         # collect file data for all the chunks (name, hash, id)
         chunks = []
         chunk_id = 0
-        for chunk in iter(lambda: f.read(constants.CHUNK_SIZE), b''):
+        for chunk in iter(lambda: f.read(constants.CHUNK_SIZE), b""):
             chunk_data = {}
-            chunk_data['id'] = chunk_id
-            chunk_data['name'] = fhash + '#' + str(chunk_id)
-            chunk_data['hash'] = hashlib.sha256(chunk).hexdigest()
+            chunk_data["id"] = chunk_id
+            chunk_data["name"] = fhash + "#" + str(chunk_id)
+            chunk_data["hash"] = hashlib.sha256(chunk).hexdigest()
             chunks.append(chunk_data)
 
-            chunk_filename = new_dir / chunk_data['name']
-            with open(chunk_filename, 'wb') as chunk_file:
+            chunk_filename = new_dir / chunk_data["name"]
+            with open(chunk_filename, "wb") as chunk_file:
                 chunk_file.write(chunk)
 
             chunk_id += 1
@@ -63,8 +63,8 @@ def send_request(data):
             continue
 
     return {
-        'success': False,
-        'error': "No trackers available",
+        "success": False,
+        "error": "No trackers available",
     }
 
 
@@ -76,20 +76,20 @@ def add_file_r(filename):
             "error": "File does not exist",
         }
 
-    config = get_configs() if os.path.exists('config.ini') else add_seq()
+    config = get_configs() if os.path.exists("config.ini") else add_seq()
 
     data = {}
-    data['guid'] = None if 'guid' not in config else config['guid']
-    data['seq_number'] = int(config['seq_number'])
-    data['name'] = file.name
+    data["guid"] = None if "guid" not in config else config["guid"]
+    data["seq_number"] = int(config["seq_number"])
+    data["name"] = file.name
     fullhash = get_full_hash(filename)
-    data['full_hash'] = fullhash
-    data['chunks'] = chunk_file(filename, fullhash)
+    data["full_hash"] = fullhash
+    data["chunks"] = chunk_file(filename, fullhash)
 
     response = send_request(data)
-    if(not response['success']):
-        shutil.rmtree('files/' + fullhash)
+    if(not response["success"]):
+        shutil.rmtree("files/" + fullhash)
     else:
-        update_seq(response['guid'], data['seq_number'])
+        update_seq(response["guid"], data["seq_number"])
 
     return response

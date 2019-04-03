@@ -11,7 +11,7 @@ def get_status():
 
     config = get_configs()
 
-    if config is None or 'guid' not in config:
+    if config is None or "guid" not in config:
         return {
             "success": False,
             "error": "You have no guid!",

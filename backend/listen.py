@@ -115,7 +115,7 @@ class SeedThread(threading.Thread):
         for tracker_ip in tracker_ips:
             try:
                 r = requests.put(
-                    f'http://{tracker_ip}:{constants.TRACKER_PORT}/keep_alive',
+                    f"http://{tracker_ip}:{constants.TRACKER_PORT}/keep_alive",
                     json=data,
                     timeout=constants.REQUEST_TIMEOUT,
                 )

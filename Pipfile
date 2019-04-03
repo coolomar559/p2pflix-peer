@@ -13,6 +13,7 @@ flake8-commas = "*"
 flake8-bugbear = "*"
 pep8-naming = "*"
 pytest = "*"
+flake8-quotes = "*"
 
 [packages]
 fire = "*"
