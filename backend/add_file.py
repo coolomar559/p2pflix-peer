@@ -81,7 +81,7 @@ def add_file_r(filename):
     data = {}
     data['guid'] = None if 'guid' not in config else config['guid']
     data['seq_number'] = int(config['seq_number'])
-    data['name'] = filename
+    data['name'] = file.name
     fullhash = get_full_hash(filename)
     data['full_hash'] = fullhash
     data['chunks'] = chunk_file(filename, fullhash)

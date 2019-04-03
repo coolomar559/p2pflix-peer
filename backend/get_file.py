@@ -1,4 +1,5 @@
 from concurrent import futures
+from functools import partial
 import hashlib
 import pickle
 import socket
@@ -28,14 +29,24 @@ def get_file_info(fhash):
 
 
 # Download the given file with the given number of threads
-# Returns true on successful download and false otherwise
-def download_file(file_details_json, num_of_threads=4):
+# It also takes a progress callback so it can update a progress bar every time a chunk is
+# downloaded. It does NOT include the total number of chunks downloaded but instead calls
+# the progress callback with True every time it succeeds to download a chunk, or False in
+# two cases: either the chunk download has failed and should be aborted, or the download
+# is complete.
+# Returns a JSON object representing the result of the download, either success: True or
+# success: False plus an error message.
+def download_file(file_details_json, progress_callback, num_of_threads=4):
     # Make sure the chunk directory exists
     constants.CHUNK_DOWNLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
     # Return false if we failed to download the chunks
-    if not download_many(file_details_json, num_of_threads):
-        return False
+    download_result = download_many(file_details_json, progress_callback, num_of_threads)
+    if not download_result["success"]:
+        return download_result
+
+    # Download is complete
+    progress_callback(False)
 
     # Combine the chunks and verify the file
     combine_chunks(file_details_json)
@@ -47,7 +58,7 @@ def download_file(file_details_json, num_of_threads=4):
 def verify_full_file(file_details_json):
     file_name = file_details_json['name']
     expected_hash = file_details_json['full_hash']
-    block_size = 1000000
+    block_size = constants.BLOCK_SIZE
     sha256 = hashlib.sha256()
 
     with open(file_name, 'rb') as f:
@@ -56,26 +67,36 @@ def verify_full_file(file_details_json):
             sha256.update(buf)
             buf = f.read(block_size)
 
-    return sha256.hexdigest() == expected_hash
+    result = sha256.hexdigest() == expected_hash
+    if result:
+        return {"success": result}
+    else:
+        return {
+            "success": result,
+            "error": "Failed to validate full file hash",
+        }
 
 
 # Download the given file using the given number of threads
+# Calls the given call back with True every time a chunk download succeeds, and False when
+# a chunk download fails
 # Returns True on successful download and False otherwise
-def download_many(file_details_json, num_of_threads):
+def download_many(file_details_json, callback, num_of_threads):
     workers = min(num_of_threads, len(file_details_json['chunks']))
-    json_to_send = []
-
-    for chunk in file_details_json['chunks']:
-        json_to_send.append({'chunk': chunk, 'peers': file_details_json['peers'],
-                             'full_file_hash': file_details_json['full_hash'],
-                             'name': file_details_json['name']})
+    full_file_hash = file_details_json['full_hash']
+    peer_list = file_details_json['peers']
+    download_func = partial(download_one_chunk, full_file_hash, peer_list, callback)
 
     with futures.ThreadPoolExecutor(workers) as executor:
-        res = executor.map(download_one_chunk, json_to_send)
+        res = executor.map(download_func, file_details_json["chunks"])
         if False in res:
-            return False
+            clean_chunks()
+            return {
+                "success": False,
+                "error": "Failed to download file chunks",
+            }
         else:
-            return True
+            return {"success": True}
 
 
 # Combine the individual chunk files back into the original file
@@ -89,16 +110,22 @@ def combine_chunks(file_details_json):
             full_file.write(chunk_data)
 
 
+# Clean the chunk directory of partial chunks or failed file download chunks
+def clean_chunks():
+    for chunk in constants.CHUNK_DOWNLOAD_FOLDER.iterder():
+        chunk.unlink()
+
+
 # Attempt to download the given chunk from the list of peers and write the
-# chunk to file.
+# chunk to file. Call the callback with True if the chunk download succeeded, and False otherwise
 # Returns True on success and False otherwise
-def download_one_chunk(chunk):
+def download_one_chunk(full_file_hash, peer_list, callback, chunk):
     request_data = {
-        'full_hash': chunk['full_file_hash'],
-        'chunk_id': chunk['chunk']['id'],
+        'full_hash': full_file_hash,
+        'chunk_id': chunk['id'],
     }
 
-    for peer in chunk['peers']:
+    for peer in peer_list:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((peer['ip'], constants.PEER_PORT))
 
@@ -116,16 +143,18 @@ def download_one_chunk(chunk):
             chunk_data = recvall(s, chunk_size)
 
             # Try the next peer if we can't verify the chunk
-            if not verify_chunk(chunk_data, chunk['chunk']['chunk_hash']):
+            if not verify_chunk(chunk_data, chunk['chunk_hash']):
                 continue
 
             # Write the data to file
-            with open(constants.CHUNK_DOWNLOAD_FOLDER / chunk['chunk']['name'], 'wb') as chunk_file:
+            with open(constants.CHUNK_DOWNLOAD_FOLDER / chunk['name'], 'wb') as chunk_file:
                 chunk_file.write(chunk_data)
 
+            callback(True)
             return True
 
     # Return false if we didn't successfully get the file from any peers
+    callback(False)
     return False
 
 

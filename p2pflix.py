@@ -3,7 +3,6 @@
 from functools import partial
 from pathlib import Path
 from threading import Thread
-import time
 
 from backend import constants, deregister_file_by_hash, get_file_list, get_peer_status, get_tracker_list
 import backend.add_file as add_file_module

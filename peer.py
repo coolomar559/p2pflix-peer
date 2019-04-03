@@ -47,10 +47,11 @@ def get_file(file_hash):
     if not file_info["success"]:
         print(file_info["error"])
 
-    if download_file(file_info):
+    download_result = download_file(file_info, download_progress_callback)
+    if download_result["success"]:
         print("File downloaded successfully")
     else:
-        print("There was an error downloading the file")
+        print(download_result["error"])
 
 
 def listen():
@@ -86,6 +87,10 @@ def seeder_error(error):
 
 def seeder_shutdown():
     print("\nSeeder shut down")
+
+
+def download_progress_callback(success):
+    print(f"Got chunk progress callback: {success}")
 
 
 if __name__ == "__main__":
