@@ -22,11 +22,11 @@ def add_file(file_name):
 
 
 def resolve_discrepancy():
-    resolve()
+    pprint(resolve())
 
 
 def deregister_file_by_hash(file_hash):
-    deregister_file(file_hash)
+    pprint(deregister_file(file_hash))
 
 
 def list_files():
@@ -38,7 +38,7 @@ def list_files():
 
 
 def get_peer_status():
-    get_status()
+    pprint(get_status())
 
 
 def get_file(file_hash):
@@ -46,6 +46,7 @@ def get_file(file_hash):
 
     if not file_info["success"]:
         print(file_info["error"])
+        return
 
     download_result = download_file(file_info, download_progress_callback)
     if download_result["success"]:
