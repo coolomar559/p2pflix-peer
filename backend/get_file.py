@@ -129,7 +129,11 @@ def download_one_chunk(full_file_hash, peer_list, callback, chunk):
     while tries < constants.MAX_CHUNK_RETRY:
         for peer in peer_list:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((peer["ip"], constants.PEER_PORT))
+                try:
+                    s.connect((peer["ip"], constants.PEER_PORT))
+                except OSError:
+                    # Try next peer if we can't connect
+                    continue
 
                 # Send the request
                 s.sendall(pickle.dumps(request_data))

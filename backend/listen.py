@@ -43,28 +43,27 @@ class RequestHandler(socketserver.BaseRequestHandler):
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    pass
+    allow_reuse_address = True  # Reuse the socket for less binding errors
 
 
-# A thread class to be used for seeding files. Handles starting up a threaded TCP server
-# and sending keep alive messages to the tracker
-class SeedThread(threading.Thread):
-    # Initialize the thread with the appropriate callback functions. Listening callback is
+# A class to be used for seeding files. Handles starting up a threaded TCP server
+# and sending keep alive messages to the tracker. This should be run in a non-main thread.
+class Seeder():
+    # Initialize the seeder with the appropriate callback functions. Listening callback is
     # called when server is successfully listening, error callback will be called with a
     # string containing an error message on error, and shutdown callback will be called
-    # when the seeder thread is shutting down.
+    # when the seeder is shutting down.
     def __init__(self, listening_callback, error_callback, shutdown_callback):
         self.listening_callback = listening_callback
         self.error_callback = error_callback
         self.shutdown_callback = shutdown_callback
         self.stopped_event = threading.Event()
-        super().__init__()
 
     # Stop the thread
     def stop(self):
         self.stopped_event.set()
 
-    # Run the thread, starts the listening server and loops sending keepalives to the tracker
+    # Run the seeder, starts the listening server and loops sending keepalives to the tracker
     def run(self):
         ip = constants.LISTEN_IP
         port = constants.PEER_PORT
@@ -128,3 +127,18 @@ class SeedThread(threading.Thread):
             "success": False,
             "error": "No trackers available",
         }
+
+
+# A thread wrapper for running the seeder on a thread
+class SeedThread(threading.Thread):
+    def __init__(self, listening_callback, error_callback, shutdown_callback):
+        super().__init__()
+        self.seeder = Seeder(listening_callback, error_callback, shutdown_callback)
+        self.stopped_event = self.seeder.stopped_event
+
+    def run(self):
+        self.seeder.run()
+
+    # Stop the seeder
+    def stop(self):
+        self.seeder.stop()

@@ -6,7 +6,7 @@ from pathlib import Path
 from backend import deregister_file_by_hash, get_file_list, get_peer_status, get_tracker_list
 import backend.add_file as add_file_module
 import backend.get_file as get_file_module
-from backend.ui_worker import ProgressWorker, UIWorker
+from backend.ui_worker import ProgressWorker, SeederThread, UIWorker
 from PyQt5 import QtCore, QtWidgets, uic
 
 
@@ -22,16 +22,7 @@ class Model:
         self.total_chunk_count = 0
         self.current_chunk_count = 0
         self.current_file_name = ""
-
-    # starts the seeding subprocess
-    # TODO: seed
-    def start_seeding(self):
-        print("started seeding")
-
-    # stops the seeding subprocess
-    # TODO: stop seed
-    def stop_seeding(self):
-        print("stopped seeding")
+        self.seeder_thread = None
 
 
 # --- UI stuff that does need multithreading ---
@@ -134,8 +125,6 @@ def get_file_hook(file_hash, file_name):
 
 
 # downloads a file from another peer
-# this should be given to a thread
-# TODO: implement the download bar properly
 def get_file(file_hash, file_name):
     return get_file_module.get_file_info(file_hash)
 
@@ -158,9 +147,17 @@ def get_file_ui_handler(file_metadata):
     # spin thread
     worker = ProgressWorker(get_file_module.download_file, file_metadata)
     worker.signals.result.connect(download_ui_handler)
-    worker.signals.error.connect(error_handler)
+    worker.signals.error.connect(get_file_error_handler)
     worker.signals.progress.connect(download_progress_ui_handler)
     ui_thread_pool.start(worker)
+    return
+
+
+# hides the download ui when there's an error downloading a file
+def get_file_error_handler(error_msg):
+    error_handler(error_msg)
+    ui.download_container.setEnabled(False)
+    ui.download_container.setVisible(False)
     return
 
 
@@ -178,7 +175,7 @@ def download_progress_ui_handler(progress):
 
 # handles the ui elements for finishting a download
 def download_ui_handler(_download_result):
-    QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(model.current_file_name))
+    show_popup("Download Complete!", "{} finished downloading.".format(model.current_file_name))
     # hide container
     ui.download_container.setEnabled(False)
     ui.download_container.setVisible(False)
@@ -253,9 +250,54 @@ def add_file_ui_handler():
     return
 
 
+# Starts or stops the seeder depending on whether or not it's running
+def seeding_hook(checked):
+    print("seeding hook")
+
+    # We don't want to actually toggle the button
+    ui.actionSeeding.setChecked(not checked)
+
+    # If the seeder is not None, we must have started it, so stop it
+    if model.seeder_thread is not None:
+        model.seeder_thread.stop()
+        return
+
+    # Otherwise set up some signals and initialize the seeder
+    thread = SeederThread()
+    thread.signals.listen.connect(seeding_listen_ui_handler)
+    thread.signals.error.connect(seeding_error_handler)
+    thread.signals.shutdown.connect(seeding_shutdown_ui_handler)
+    model.seeder_thread = thread
+    model.seeder_thread.start()
+    return
+
+
+# Handle the seeder listen event
+def seeding_listen_ui_handler():
+    show_popup("Seeding Started", "Successfully started seeding")
+    ui.actionSeeding.setChecked(True)
+    return
+
+
+# Handle errors from the seeder
+def seeding_error_handler(error_msg):
+    error_handler(error_msg)
+    ui.actionSeeding.setChecked(False)
+    model.seeder_thread = None
+    return
+
+
+# Handle the seeder shutting down
+def seeding_shutdown_ui_handler():
+    show_popup("Seeding Stopped", "Stopped seeding")
+    ui.actionSeeding.setChecked(False)
+    model.seeder_thread = None
+    return
+
+
 # pops up an error happened messagebox
 def error_handler(error_string):
-    QtWidgets.QMessageBox.about(None, ERROR_TITLE, error_string)
+    show_popup(ERROR_TITLE, error_string)
 
 
 # --- UI stuff that doesn't need multithreading ---
@@ -284,7 +326,7 @@ def choose_tracker_ok():
     selected_item = ui.tracker_list.currentItem()
 
     if(selected_item is None):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, "You must select a tracker ip.")
+        show_popup(ERROR_TITLE, "You must select a tracker ip.")
         return
 
     new_ip = selected_item.text()
@@ -292,7 +334,7 @@ def choose_tracker_ok():
 
     update_response = get_tracker_list.update_primary_tracker(new_ip)
     if(not update_response["success"]):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, update_response["error"])
+        show_popup(ERROR_TITLE, update_response["error"])
         return
 
     main_window_index = 0
@@ -315,7 +357,7 @@ def choose_tracker_add():
 
     # need error stuff here
     if(not get_tracker_list.add_tracker_ip_local(new_ip)):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, "Failed to add ip")
+        show_popup(ERROR_TITLE, "Failed to add ip")
         return
 
     ui.tracker_ip_box.clear()
@@ -343,18 +385,6 @@ def tab_change(tab_index):
     return
 
 
-# hangle toggling the seeding button
-def toggle_seeding(checked):
-    if(checked):
-        model.start_seeding()
-        ui.actionSeeding.setText("Stop Seeding")
-    else:
-        model.stop_seeding()
-        ui.actionSeeding.setText("Start Seeding")
-
-    return
-
-
 # initializes the ui hooks
 def setup_ui(ui):
     # Refresh buttons setup
@@ -373,7 +403,7 @@ def setup_ui(ui):
     # Toolbar action setup
     ui.actionAdd_File.triggered.connect(add_file_hook)
     ui.actionChoose_Tracker.triggered.connect(choose_tracker)
-    ui.actionSeeding.toggled.connect(toggle_seeding)
+    ui.actionSeeding.triggered.connect(seeding_hook)
 
     # Choose tracker ui setup
     ui.choose_tracker_ok.clicked.connect(choose_tracker_ok)
@@ -389,6 +419,15 @@ def setup_ui(ui):
     peer_status_hook()
 
     return
+
+
+# Helper function for showing a popup window with some information
+# Blocks UI interaction until the popup is closed
+def show_popup(title, message):
+    box = QtWidgets.QMessageBox()
+    box.setWindowTitle(title)
+    box.setText(message)
+    box.exec()
 
 
 # Initialize the UI
