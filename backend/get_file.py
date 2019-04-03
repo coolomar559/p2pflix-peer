@@ -87,7 +87,7 @@ def download_many(file_details_json, callback, num_of_threads):
     peer_list = file_details_json['peers']
     download_func = partial(download_one_chunk, full_file_hash, peer_list, callback)
 
-    with futures.ThreadPoolExecutor(workers) as executor:
+    with futures.ThreadPoolExecutor(max_workers=workers) as executor:
         res = executor.map(download_func, file_details_json["chunks"])
         if False in res:
             clean_chunks()
@@ -112,7 +112,7 @@ def combine_chunks(file_details_json):
 
 # Clean the chunk directory of partial chunks or failed file download chunks
 def clean_chunks():
-    for chunk in constants.CHUNK_DOWNLOAD_FOLDER.iterder():
+    for chunk in constants.CHUNK_DOWNLOAD_FOLDER.iterdir():
         chunk.unlink()
 
 
@@ -125,33 +125,42 @@ def download_one_chunk(full_file_hash, peer_list, callback, chunk):
         'chunk_id': chunk['id'],
     }
 
-    for peer in peer_list:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((peer['ip'], constants.PEER_PORT))
+    tries = 0
+    while tries < constants.MAX_CHUNK_RETRY:
+        for peer in peer_list:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((peer['ip'], constants.PEER_PORT))
 
-            # Send the request
-            s.sendall(pickle.dumps(request_data))
+                # Send the request
+                s.sendall(pickle.dumps(request_data))
 
-            # Recieve the file size (or -1 for error)
-            chunk_size = pickle.loads(s.recv(64))
+                # Recieve the file size (or -1 for error)
+                chunk_size = pickle.loads(s.recv(64))
 
-            # Try next peer if there was an error
-            if chunk_size == -1:
-                continue
+                # Try next peer if there was an error
+                if chunk_size == -1:
+                    continue
 
-            # Recieve the file data
-            chunk_data = recvall(s, chunk_size)
+                # Recieve the file data
+                chunk_data = recvall(s, chunk_size)
 
-            # Try the next peer if we can't verify the chunk
-            if not verify_chunk(chunk_data, chunk['chunk_hash']):
-                continue
+                # Check if we successfully recieved the data
+                if chunk_data is None:
+                    continue
 
-            # Write the data to file
-            with open(constants.CHUNK_DOWNLOAD_FOLDER / chunk['name'], 'wb') as chunk_file:
-                chunk_file.write(chunk_data)
+                # Try the next peer if we can't verify the chunk
+                if not verify_chunk(chunk_data, chunk['chunk_hash']):
+                    continue
 
-            callback(True)
-            return True
+                # Write the data to file
+                with open(constants.CHUNK_DOWNLOAD_FOLDER / chunk['name'], 'wb') as chunk_file:
+                    chunk_file.write(chunk_data)
+
+                callback(True)
+                return True
+
+        # If we failed to download a chunk, increment our tries counter
+        tries += 1
 
     # Return false if we didn't successfully get the file from any peers
     callback(False)
@@ -174,6 +183,8 @@ def recvall(sock, n):
     data = bytearray()
     while len(data) < n:
         packet = sock.recv(n - len(data))
+        if not packet:
+            return None
         data += packet
 
     return data

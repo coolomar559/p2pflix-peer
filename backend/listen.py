@@ -69,7 +69,12 @@ class SeedThread(threading.Thread):
         ip = constants.LISTEN_IP
         port = constants.PEER_PORT
 
-        server = ThreadedTCPServer((ip, port), RequestHandler)
+        try:
+            server = ThreadedTCPServer((ip, port), RequestHandler)
+        except OSError as e:
+            self.error_callback(f"Error during bind: {e.strerror}")
+            self.stop()
+            return
 
         t = threading.Thread(target=server.serve_forever)
         t.daemon = True
