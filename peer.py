@@ -48,7 +48,7 @@ def get_file(file_hash):
         print(file_info["error"])
         return
 
-    download_result = download_file(file_info, download_progress_callback)
+    download_result = download_file(download_progress_callback, file_info)
     if download_result["success"]:
         print("File downloaded successfully")
     else:

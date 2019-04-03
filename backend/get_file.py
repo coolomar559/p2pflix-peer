@@ -36,7 +36,7 @@ def get_file_info(fhash):
 # is complete.
 # Returns a JSON object representing the result of the download, either success: True or
 # success: False plus an error message.
-def download_file(file_details_json, progress_callback, num_of_threads=4):
+def download_file(progress_callback, file_details_json, num_of_threads=4):
     # Make sure the chunk directory exists
     constants.CHUNK_DOWNLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
