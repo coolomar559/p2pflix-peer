@@ -2,12 +2,13 @@
 
 from functools import partial
 from pathlib import Path
-from threading import Thread
 
-from backend import constants, deregister_file_by_hash, get_file_list, get_peer_status, get_tracker_list
+from backend import deregister_file_by_hash, get_file_list, get_peer_status, get_tracker_list
 import backend.add_file as add_file_module
 import backend.get_file as get_file_module
-from PyQt5 import QtWidgets, uic
+from backend.ui_worker import ProgressWorker, UIWorker
+from PyQt5 import QtCore, QtWidgets, uic
+
 
 UI_FILE_NAME = "./ui/p2pflix-ui.ui"
 ERROR_TITLE = "Error!"
@@ -17,32 +18,10 @@ ERROR_TITLE = "Error!"
 # does some ui functions
 class Model:
     def __init__(self):
-        self.tracker_list = []
-        self.file_list_dict = {
-            "success": False,
-            "error": "No file list yet",
-        }
-        self.my_file_list_dict = {
-            "success": False,
-            "error": "No peer status yet",
-        }
         self.seeder_subprocess = None
-
-    # gets the tracker list and updates the model
-    # this probably doesn't need multithreading
-    def get_tracker_list(self):
-        self.tracker_list = get_tracker_list.get_local_tracker_list()
-        return self.tracker_list
-
-    # gets the file list from the tracker and updates the model
-    def get_file_list(self):
-        self.file_list_dict = get_file_list.get_file_list()
-        return self.file_list_dict
-
-    # gets the peer status (hosted files, seq numbers) from the tracker and updates the model
-    def get_my_peer_status(self):
-        self.my_file_list_dict = get_peer_status.get_status()
-        return self.my_file_list_dict
+        self.total_chunk_count = 0
+        self.current_chunk_count = 0
+        self.current_file_name = ""
 
     # starts the seeding subprocess
     # TODO: seed
@@ -63,33 +42,34 @@ class Model:
 # real work is done is refresh()
 def refresh_hook():
     print("Refresh hook")
-    thread = Thread(target=refresh, daemon=True)
-    thread.start()
+    worker = UIWorker(refresh)
+    worker.signals.result.connect(refresh_ui_handler)
+    worker.signals.error.connect(error_handler)
+    ui_thread_pool.start(worker)
     return
 
 
 # refreshes the file list on the ui
 # this should be given to a thread
 def refresh():
+    # gets the file list from the tracker
+    return get_file_list.get_file_list()
+
+
+# handles the ui elements of refresh
+def refresh_ui_handler(file_dict):
+    file_list = file_dict["files"]
     table = ui.file_list_table
     name_column = 0
     active_peer_column = 1
     action_column = 2
-
-    # gets the file list from the tracker
-    file_list_dict = model.get_file_list()
-    if(not file_list_dict["success"]):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, file_list_dict["error"])
-        return
-
-    file_list = file_list_dict["files"]
 
     # clears then populates the file list table
     table.setRowCount(0)
     for file in file_list:
         download_button = QtWidgets.QPushButton()
         download_button.setText("Download")
-        download_button.clicked.connect(partial(get_file_hook, file["hash"], file["name"]))
+        download_button.clicked.connect(partial(get_file_hook, file["full_hash"], file["name"]))
 
         row_position = table.rowCount()
         table.insertRow(row_position)
@@ -101,52 +81,53 @@ def refresh():
 # refreshes the my file list on the ui
 # this function is a hook for buttons
 # real work is done is peer_status()
-# TODO: thread peer_status()
 def peer_status_hook():
     print("Peer status hook")
-    thread = Thread(target=peer_status, daemon=True)
-    thread.start()
+    worker = UIWorker(peer_status)
+    worker.signals.result.connect(peer_status_ui_handler)
+    worker.signals.error.connect(error_handler)
+    ui_thread_pool.start(worker)
     return
 
 
 # refreshes the my file list on the ui
 # this should be given to a thread
 def peer_status():
+    # gets the peer status from the tracker
+    return get_peer_status.get_status()
+
+
+# handles the ui elements of peer_status
+def peer_status_ui_handler(file_dict):
+    file_list = file_dict["files"]
     table = ui.my_file_list_table
     name_column = 0
     action_column = 1
-
-    # gets the peer status from the tracker
-    peer_status_dict = model.get_my_peer_status()
-    if(not peer_status_dict["success"]):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, peer_status_dict["error"])
-        return
-
-    file_list = peer_status_dict["files"]
 
     # clears then populates the my files table
     table.setRowCount(0)
     for file in file_list:
         remove_button = QtWidgets.QPushButton()
         remove_button.setText("Remove")
-        remove_button.clicked.connect(partial(deregister_file_hook, file["hash"]))
+        remove_button.clicked.connect(partial(deregister_file_hook, file["full_hash"]))
 
         row_position = table.rowCount()
         table.insertRow(row_position)
         table.setItem(row_position, name_column, QtWidgets.QTableWidgetItem(file["name"]))
         table.setCellWidget(row_position, action_column, remove_button)
 
-    return
-
 
 # downloads a file from another peer
 # this function is a hook for buttons
 # real work is done in get_file()
-# TODO: thread get_file
 def get_file_hook(file_hash, file_name):
     print("Get file hook - file hash {}".format(file_hash))
-    thread = Thread(target=get_file, args=(file_hash, file_name), daemon=True)
-    thread.start()
+    # thread = Thread(target=get_file, args=(file_hash, file_name), daemon=True)
+    # thread.start()
+    worker = UIWorker(get_file, file_hash, file_name)
+    worker.signals.result.connect(get_file_ui_handler)
+    worker.signals.error.connect(error_handler)
+    ui_thread_pool.start(worker)
     return
 
 
@@ -154,32 +135,49 @@ def get_file_hook(file_hash, file_name):
 # this should be given to a thread
 # TODO: implement the download bar properly
 def get_file(file_hash, file_name):
-    file_metadata = get_file_module.get_file_info(file_hash)
-    if(not file_metadata["success"]):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, file_metadata["error"])
-        return
+    return get_file_module.get_file_info(file_hash)
 
-    chunk_count = len(file_metadata["chunks"])
 
+# handles the ui elements for get_file
+def get_file_ui_handler(file_metadata):
+    # show ui
     progress_bar = ui.download_bar
     label = ui.download_label
 
     ui.download_container.setVisible(True)
     ui.download_container.setEnabled(True)
-    label.setText("Downloading {}".format(file_name))
+    label.setText("Downloading {}".format(file_metadata["name"]))
     progress_bar.setValue(0)
 
-    track_progress(Path(constants.CHUNK_DOWNLOAD_FOLDER), progress_bar, chunk_count)  # make a thread do this
+    model.current_chunk_count = 0
+    model.total_chunk_count = len(file_metadata["chunks"])
+    model.current_file_name = file_metadata["name"]
 
-    get_file_module.download(file_metadata)
+    # spin thread
+    worker = ProgressWorker(get_file_module.download_file, file_metadata)
+    worker.signals.result.connect(download_ui_handler)
+    worker.signals.error.connect(error_handler)
+    worker.signals.progress.connect(download_progress_ui_handler)
+    ui_thread_pool.start(worker)
+    return
 
-    # await/kill track progress
 
-    QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(file_name))
+def download_progress_ui_handler(progress):
+    if(not progress):
+        return
 
+    model.current_chunk_count += 1
+
+    progress_percent = int((model.current_chunk_count/model.total_chunk_count)*100)
+    ui.download_bar.setValue(progress_percent)
+    return
+
+
+def download_ui_handler(_download_result):
+    QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(model.current_file_name))
+    # hide container
     ui.download_container.setEnabled(False)
     ui.download_container.setVisible(False)
-
     return
 
 
@@ -202,54 +200,58 @@ def track_progress(directory, progress_bar, chunk_count):
 # deregisters you as a host for a file
 # this is just a hook for buttons
 # real work is done in deregister_file()
-# TODO: thread deregister_file()
 def deregister_file_hook(file_hash):
     print("Deregister file hook - file hash {}".format(file_hash))
-    thread = Thread(target=deregister_file, args=(file_hash,), daemon=True)
-    thread.start()
+    worker = UIWorker(deregister_file, file_hash)
+    worker.signals.result.connect(deregister_file_ui_handler)
+    worker.signals.error.connect(error_handler)
+    ui_thread_pool.start(worker)
     return
 
 
 # deregisters you as a host for a file
 # this should be given to a thread
 def deregister_file(file_hash):
-    response = deregister_file_by_hash.deregister_file(file_hash)
+    return deregister_file_by_hash.deregister_file(file_hash)
 
-    if(not response["success"]):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, response["error"])
-    else:
-        peer_status_hook()  # reload when done
 
+# handles the ui elements for deregister_file
+def deregister_file_ui_handler():
+    peer_status_hook()
     return
 
 
 # adds a file to the tracker
 # this is just a hook for buttons
 # real work done in add_file
-# TODO: thread add_file
 def add_file_hook():
     print("Add file hook")
     file_name = QtWidgets.QFileDialog.getOpenFileName(None, "Choose file to add", str(Path("./")))[0]
     print("Chose to add {}".format(file_name))
     if(file_name != ""):
-        add_file(file_name)
-        thread = Thread(target=add_file, args=(file_name), daemon=True)
-        thread.start()
+        worker = UIWorker(add_file, file_name)
+        worker.signals.result.connect(add_file_ui_handler)
+        worker.signals.error.connect(error_handler)
+        ui_thread_pool.start(worker)
     return
 
 
 # adds a file to the tracker
 # this should be given to a thread
 def add_file(file_name):
-    response = add_file_module.add_file_r(file_name)
+    return add_file_module.add_file_r(file_name)
 
-    if(not response["success"]):
-        QtWidgets.QMessageBox.about(None, ERROR_TITLE, response["error"])
-    else:
-        refresh_hook()  # reload when done
-        peer_status_hook()
 
+# handles the ui elements for add_file
+def add_file_ui_handler():
+    refresh_hook()
+    peer_status_hook()
     return
+
+
+# pops up an error happened messagebox
+def error_handler(error_string):
+    QtWidgets.QMessageBox.about(None, ERROR_TITLE, error_string)
 
 
 # --- UI stuff that doesn't need multithreading ---
@@ -261,7 +263,7 @@ def add_file(file_name):
 def choose_tracker():
     print("Choose tracker")
 
-    tracker_list = model.get_tracker_list()
+    tracker_list = get_tracker_list.get_local_tracker_list()
 
     ui.tracker_list.clear()
     ui.tracker_list.addItems(tracker_list)
@@ -314,7 +316,7 @@ def choose_tracker_add():
 
     ui.tracker_ip_box.clear()
 
-    tracker_list = model.get_tracker_list()
+    tracker_list = get_tracker_list.get_local_tracker_list()
     ui.tracker_list.clear()
     ui.tracker_list.addItems(tracker_list)
 
@@ -379,8 +381,8 @@ def setup_ui(ui):
     ui.download_container.setEnabled(False)
 
     # deliberately being called without threads to initialize
-    refresh()
-    peer_status()
+    refresh_hook()
+    peer_status_hook()
 
     return
 
@@ -390,6 +392,9 @@ app = QtWidgets.QApplication([])
 ui = uic.loadUi(Path(__file__).parent.joinpath(UI_FILE_NAME))
 
 model = Model()
+
+# start threadpool
+ui_thread_pool = QtCore.QThreadPool()
 
 setup_ui(ui)
 

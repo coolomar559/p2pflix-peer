@@ -44,7 +44,7 @@ def deregister_file(file_hash):
         update_seq(config['guid'], int(config['seq_number']))
         if(os.path.exists('files/' + file_hash)):
             shutil.rmtree('files/' + file_hash)
-        return {"sucess": True}
+        return {"success": True}
 
     return {
         "success": False,
