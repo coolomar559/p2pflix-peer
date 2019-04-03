@@ -42,6 +42,8 @@ class Model:
 # real work is done is refresh()
 def refresh_hook():
     print("Refresh hook")
+    ui.file_list_table.setRowCount(0)
+
     worker = UIWorker(refresh)
     worker.signals.result.connect(refresh_ui_handler)
     worker.signals.error.connect(error_handler)
@@ -162,6 +164,7 @@ def get_file_ui_handler(file_metadata):
     return
 
 
+# handles the ui elements for the progress bar
 def download_progress_ui_handler(progress):
     if(not progress):
         return
@@ -173,6 +176,7 @@ def download_progress_ui_handler(progress):
     return
 
 
+# handles the ui elements for finishting a download
 def download_ui_handler(_download_result):
     QtWidgets.QMessageBox.about(None, "Download Complete!", "{} finished downloading.".format(model.current_file_name))
     # hide container
