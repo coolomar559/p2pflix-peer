@@ -2,15 +2,12 @@
 
 from functools import partial
 from pathlib import Path
-# import time
+from threading import Thread
+import time
 
-import add_file as add_file_module
-import constants
-import deregister_file_by_hash
-import get_file as get_file_module
-import get_file_list
-import get_peer_status
-import get_tracker_list
+from backend import constants, deregister_file_by_hash, get_file_list, get_peer_status, get_tracker_list
+import backend.add_file as add_file_module
+import backend.get_file as get_file_module
 from PyQt5 import QtWidgets, uic
 
 UI_FILE_NAME = "./ui/p2pflix-ui.ui"
@@ -65,10 +62,10 @@ class Model:
 # refreshes the file list on the ui
 # this function is a hook for buttons
 # real work is done is refresh()
-# TODO: thread refresh()
 def refresh_hook():
     print("Refresh hook")
-    refresh()
+    thread = Thread(target=refresh, daemon=True)
+    thread.start()
     return
 
 
@@ -108,7 +105,8 @@ def refresh():
 # TODO: thread peer_status()
 def peer_status_hook():
     print("Peer status hook")
-    peer_status()
+    thread = Thread(target=peer_status, daemon=True)
+    thread.start()
     return
 
 
@@ -148,7 +146,8 @@ def peer_status():
 # TODO: thread get_file
 def get_file_hook(file_hash, file_name):
     print("Get file hook - file hash {}".format(file_hash))
-    get_file(file_hash, file_name)
+    thread = Thread(target=get_file, args=(file_hash, file_name), daemon=True)
+    thread.start()
     return
 
 
@@ -187,6 +186,7 @@ def get_file(file_hash, file_name):
 
 # handles incrementing the progress bar
 def track_progress(directory, progress_bar, chunk_count):
+    directory.mkdir(parents=True, exist_ok=True)
     progress = 0
     files_in_directory = len(list(directory.iterdir()))
     while(files_in_directory < chunk_count):
@@ -206,7 +206,8 @@ def track_progress(directory, progress_bar, chunk_count):
 # TODO: thread deregister_file()
 def deregister_file_hook(file_hash):
     print("Deregister file hook - file hash {}".format(file_hash))
-    deregister_file(file_hash)
+    thread = Thread(target=deregister_file, args=(file_hash,), daemon=True)
+    thread.start()
     return
 
 
@@ -233,8 +234,9 @@ def add_file_hook():
     print("Chose to add {}".format(file_name))
     if(file_name != ""):
         add_file(file_name)
+        thread = Thread(target=add_file, args=(file_name), daemon=True)
+        thread.start()
     return
-    # reload when done
 
 
 # adds a file to the tracker
