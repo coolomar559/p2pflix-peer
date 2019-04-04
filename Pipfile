@@ -13,9 +13,14 @@ flake8-commas = "*"
 flake8-bugbear = "*"
 pep8-naming = "*"
 pytest = "*"
+flake8-quotes = "*"
 
 [packages]
 fire = "*"
+requests = "*"
+toml = "*"
+pyqt5 = "*"
+ipy = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3"
