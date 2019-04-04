@@ -14,6 +14,7 @@ def get_status():
     if config is None or "guid" not in config:
         return {
             "success": False,
+            "localerror": True,
             "error": "You have no guid!",
         }
 
@@ -31,5 +32,6 @@ def get_status():
 
     return {
             "success": False,
+            "localerror": True,
             "error": "Can't connect to any tracker",
         }

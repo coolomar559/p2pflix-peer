@@ -1,4 +1,7 @@
 import configparser
+from pathlib import Path
+
+CONFIG_FILE = Path.cwd() / "config.ini"
 
 
 # Reads config file, updates seq_number,
@@ -6,11 +9,11 @@ import configparser
 # and writes file
 def update_seq(guid, seq_number):
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    config.read(CONFIG_FILE)
     config.set("p2pflix", "seq_number", str(seq_number+1))
     if "seq_number" not in config:
         config.set("p2pflix", "guid", guid)
-    with open("config.ini", "w") as f:
+    with open(CONFIG_FILE, "w") as f:
         config.write(f)
 
 
@@ -20,7 +23,7 @@ def update_seq(guid, seq_number):
 def get_configs():
     try:
         config = configparser.ConfigParser()
-        config.read("config.ini")
+        config.read(CONFIG_FILE)
         return dict(config.items("p2pflix"))
     except Exception:
         return {
@@ -33,8 +36,17 @@ def get_configs():
 # with a seq_number
 def add_seq():
     config = configparser.ConfigParser()
-    config.add_section("p2pflix")
-    config.set("p2pflix", "seq_number", "0")
-    with open("config.ini", "w") as f:
+    config.add_section(CONFIG_FILE)
+    config.set(CONFIG_FILE, "seq_number", "0")
+    with open(CONFIG_FILE, "w") as f:
         config.write(f)
     return dict(config.items("p2pflix"))
+
+
+# Remove the config file, resetting to default
+def reset_config():
+    try:
+        CONFIG_FILE.unlink()
+    except FileNotFoundError:
+        # If the file doesn't exist, just return
+        pass
