@@ -334,6 +334,8 @@ def choose_tracker_ok():
         show_popup(ERROR_TITLE, update_response["error"])
         return
 
+    # TODO: TRACKER SYNC HERE AARON
+
     main_window_index = 0
     ui.ui_stack.setCurrentIndex(main_window_index)
 
