@@ -19,6 +19,7 @@ def resolve():
         else:
             # If it's not a local error, reset our config and delete our hosted files
             get_configs.reset_config()
+            ka_seq.set_ka_seq(0)
             failures = []
             for folder in constants.CHUNK_DIRECTORY.iterdir():
                 try:

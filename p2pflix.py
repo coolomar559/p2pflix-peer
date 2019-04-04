@@ -257,7 +257,7 @@ def seeding_hook(checked):
     ui.actionSeeding.setChecked(not checked)
 
     # If the seeder is not None, we must have started it, so stop it
-    if model.seeder_thread is not None:
+    if model.seeder_thread is not None and not model.seeder_thread.isFinished():
         model.seeder_thread.stop()
         return
 
@@ -281,14 +281,12 @@ def seeding_listen_ui_handler():
 def seeding_error_handler(error_msg):
     error_handler(error_msg)
     ui.actionSeeding.setChecked(False)
-    model.seeder_thread = None
     return
 
 
 # Handle the seeder shutting down
 def seeding_shutdown_ui_handler():
     ui.actionSeeding.setChecked(False)
-    model.seeder_thread = None
     return
 
 
