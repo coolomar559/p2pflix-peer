@@ -84,10 +84,12 @@ class Seeder():
         if "success" in config and not config["success"]:
             self.error_callback(config["error"])
             self.stop()
+            return
 
         if "guid" not in config:
             self.error_callback("Peer does not have GUID")
             self.stop()
+            return
 
         while not self.stopped_event.is_set():
             data = {

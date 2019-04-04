@@ -1,5 +1,5 @@
+from collections import deque
 from concurrent import futures
-from functools import partial
 import hashlib
 import pickle
 import socket
@@ -36,12 +36,12 @@ def get_file_info(fhash):
 # is complete.
 # Returns a JSON object representing the result of the download, either success: True or
 # success: False plus an error message.
-def download_file(progress_callback, file_details_json, num_of_threads=4):
+def download_file(progress_callback, file_details_json):
     # Make sure the chunk directory exists
     constants.CHUNK_DOWNLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 
     # Return false if we failed to download the chunks
-    download_result = download_many(file_details_json, progress_callback, num_of_threads)
+    download_result = download_many(file_details_json, progress_callback)
     if not download_result["success"]:
         return download_result
 
@@ -86,22 +86,27 @@ def verify_full_file(file_details_json):
 # Calls the given call back with True every time a chunk download succeeds, and False when
 # a chunk download fails
 # Returns True on successful download and False otherwise
-def download_many(file_details_json, callback, num_of_threads):
-    workers = min(num_of_threads, len(file_details_json["chunks"]))
+def download_many(file_details_json, callback):
+    chunks = file_details_json["chunks"]
+    workers = min(constants.CHUNK_DOWNLOAD_THREADS, len(chunks))
     full_file_hash = file_details_json["full_hash"]
-    peer_list = file_details_json["peers"]
-    download_func = partial(download_one_chunk, full_file_hash, peer_list, callback)
+    peer_list = deque(file_details_json["peers"])
 
     with futures.ThreadPoolExecutor(max_workers=workers) as executor:
-        res = executor.map(download_func, file_details_json["chunks"])
-        if False in res:
-            clean_chunks()
-            return {
-                "success": False,
-                "error": "Failed to download file chunks",
-            }
-        else:
-            return {"success": True}
+        res = []
+        for chunk in chunks:
+            future = executor.submit(download_one_chunk, full_file_hash, peer_list, callback, chunk)
+            res.append(future)
+            peer_list.rotate()
+
+    if False in res:
+        clean_chunks()
+        return {
+            "success": False,
+            "error": "Failed to download file chunks",
+        }
+    else:
+        return {"success": True}
 
 
 # Combine the individual chunk files back into the original file
