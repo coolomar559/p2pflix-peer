@@ -3,7 +3,7 @@
 from functools import partial
 from pathlib import Path
 
-from backend import deregister_file_by_hash, get_file_list, get_peer_status, get_tracker_list
+from backend import deregister_file_by_hash, discrepancy_resolution, get_file_list, get_peer_status, get_tracker_list
 import backend.add_file as add_file_module
 import backend.get_file as get_file_module
 from backend.ui_worker import ProgressWorker, SeederThread, UIWorker
@@ -334,7 +334,10 @@ def choose_tracker_ok():
         show_popup(ERROR_TITLE, update_response["error"])
         return
 
-    # TODO: TRACKER SYNC HERE AARON
+    result = discrepancy_resolution.resolve()
+
+    if not result["success"]:
+        error_handler(result["error"])
 
     main_window_index = 0
     ui.ui_stack.setCurrentIndex(main_window_index)
@@ -406,7 +409,10 @@ def sync_ok_hook():
     QtWidgets.QApplication.processEvents()
     QtWidgets.QApplication.processEvents()
 
-    # TODO: SYNC GOES HERE AARON
+    result = discrepancy_resolution.resolve()
+
+    if not result["success"]:
+        error_handler(result["error"])
 
     sync_cancel_hook()
 
