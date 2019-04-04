@@ -2,6 +2,7 @@ import configparser
 from pathlib import Path
 
 CONFIG_FILE = Path.cwd() / "config.ini"
+P2PFLIX_HEADER = "p2pflix"
 
 
 # Reads config file, updates seq_number,
@@ -10,9 +11,9 @@ CONFIG_FILE = Path.cwd() / "config.ini"
 def update_seq(guid, seq_number):
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE)
-    config.set("p2pflix", "seq_number", str(seq_number+1))
+    config.set(P2PFLIX_HEADER, "seq_number", str(seq_number+1))
     if "seq_number" not in config:
-        config.set("p2pflix", "guid", guid)
+        config.set(P2PFLIX_HEADER, "guid", guid)
     with open(CONFIG_FILE, "w") as f:
         config.write(f)
 
@@ -24,7 +25,7 @@ def get_configs():
     try:
         config = configparser.ConfigParser()
         config.read(CONFIG_FILE)
-        return dict(config.items("p2pflix"))
+        return dict(config.items(P2PFLIX_HEADER))
     except Exception:
         return {
                 "success": False,
@@ -36,11 +37,11 @@ def get_configs():
 # with a seq_number
 def add_seq():
     config = configparser.ConfigParser()
-    config.add_section(CONFIG_FILE)
-    config.set(CONFIG_FILE, "seq_number", "0")
+    config.add_section(P2PFLIX_HEADER)
+    config.set(P2PFLIX_HEADER, "seq_number", "0")
     with open(CONFIG_FILE, "w") as f:
         config.write(f)
-    return dict(config.items("p2pflix"))
+    return dict(config.items(P2PFLIX_HEADER))
 
 
 # Remove the config file, resetting to default
