@@ -334,10 +334,8 @@ def choose_tracker_ok():
         show_popup(ERROR_TITLE, update_response["error"])
         return
 
-    result = discrepancy_resolution.resolve()
-
-    if not result["success"]:
-        error_handler(result["error"])
+    refresh_hook()
+    peer_status_hook()
 
     main_window_index = 0
     ui.ui_stack.setCurrentIndex(main_window_index)

@@ -88,7 +88,7 @@ def update_primary_tracker(new_primary_ip):
     with tracker_file_path.open("r+b") as tracker_file:
         tracker_data = pickle.load(tracker_file)
         tracker_data["primary"] = new_primary_ip
-        tracker_data["backups"] = pull_response["trackers"]
+        tracker_data["backups"] = [t["ip"] for t in pull_response["trackers"]]
 
         tracker_file.seek(0)
         pickle.dump(tracker_data, tracker_file)
