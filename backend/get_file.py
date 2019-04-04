@@ -99,7 +99,7 @@ def download_many(file_details_json, callback):
             res.append(future)
             peer_list.rotate()
 
-    if False in res:
+    if False in [f.result() for f in res]:
         clean_chunks()
         return {
             "success": False,
