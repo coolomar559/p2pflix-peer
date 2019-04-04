@@ -430,6 +430,7 @@
    </attribute>
    <addaction name="actionAdd_File"/>
    <addaction name="actionChoose_Tracker"/>
+   <addaction name="actionTracker_Sync"/>
    <addaction name="actionSeeding"/>
   </widget>
   <action name="actionAdd_File">
@@ -451,6 +452,14 @@
    </property>
    <property name="toolTip">
     <string>Seeding</string>
+   </property>
+  </action>
+  <action name="actionTracker_Sync">
+   <property name="text">
+    <string>Tracker Sync</string>
+   </property>
+   <property name="toolTip">
+    <string>Tracker Sync</string>
    </property>
   </action>
  </widget>

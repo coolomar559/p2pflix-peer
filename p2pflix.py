@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtWidgets, uic
 
 
 UI_FILE_NAME = "./ui/p2pflix-ui.ui"
+SYNC_DIALOGUE_NAME = "./ui/sync-dialogue.ui"
 ERROR_TITLE = "Error!"
 
 
@@ -381,6 +382,51 @@ def tab_change(tab_index):
     return
 
 
+# handles syncing the peer and tracker
+def sync_hook():
+    sync_dialogue.show()
+
+
+# handles pressing cancel button
+def sync_cancel_hook():
+    sync_dialogue.hide()
+    sync_reset()
+
+
+# handles pressing ok button
+def sync_ok_hook():
+    sync_dialogue.sync_message_text.setText("Now syncing. Please wait...")
+    sync_dialogue.sync_ok_button.hide()
+    sync_dialogue.sync_cancel_button.hide()
+    sync_dialogue.setWindowTitle("Tracker Sync In Progress")
+
+    # double process events because of qt jank
+    QtWidgets.QApplication.processEvents()
+    QtWidgets.QApplication.processEvents()
+
+    # TODO: SYNC GOES HERE AARON
+
+    sync_cancel_hook()
+
+
+# sets the sync back to normal
+def sync_reset():
+    sync_dialogue.sync_message_text.setText("Are you sure? This may delete some files you are seeding.")
+    sync_dialogue.sync_ok_button.show()
+    sync_dialogue.sync_cancel_button.show()
+    sync_dialogue.setWindowTitle("Confirm Tracker Sync")
+
+    # double process events because of qt jank
+    QtWidgets.QApplication.processEvents()
+    QtWidgets.QApplication.processEvents()
+
+
+# initializes the sync dialogue box
+def setup_sync_dialogue(sync_dialogue):
+    sync_dialogue.sync_ok_button.clicked.connect(sync_ok_hook)
+    sync_dialogue.sync_cancel_button.clicked.connect(sync_cancel_hook)
+
+
 # initializes the ui hooks
 def setup_ui(ui):
     # Refresh buttons setup
@@ -400,6 +446,7 @@ def setup_ui(ui):
     ui.actionAdd_File.triggered.connect(add_file_hook)
     ui.actionChoose_Tracker.triggered.connect(choose_tracker)
     ui.actionSeeding.triggered.connect(seeding_hook)
+    ui.actionTracker_Sync.triggered.connect(sync_hook)
 
     # Choose tracker ui setup
     ui.choose_tracker_ok.clicked.connect(choose_tracker_ok)
@@ -429,6 +476,7 @@ def show_popup(title, message):
 # Initialize the UI
 app = QtWidgets.QApplication([])
 ui = uic.loadUi(Path(__file__).parent.joinpath(UI_FILE_NAME))
+sync_dialogue = uic.loadUi(Path(__file__).parent.joinpath(SYNC_DIALOGUE_NAME))
 
 model = Model()
 
@@ -436,6 +484,7 @@ model = Model()
 ui_thread_pool = QtCore.QThreadPool()
 
 setup_ui(ui)
+setup_sync_dialogue(sync_dialogue)
 
 ui.show()
 app.exec()
