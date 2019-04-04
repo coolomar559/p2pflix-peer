@@ -50,7 +50,12 @@ def download_file(progress_callback, file_details_json, num_of_threads=4):
 
     # Combine the chunks and verify the file
     combine_chunks(file_details_json)
-    return verify_full_file(file_details_json)
+    verify_response = verify_full_file(file_details_json)
+    if(verify_response["success"]):
+        verify_response["name"] = file_details_json["name"]
+        return verify_response
+    else:
+        return verify_response
 
 
 # Verify the given full file

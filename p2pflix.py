@@ -115,8 +115,6 @@ def peer_status_ui_handler(file_dict):
 # real work is done in get_file()
 def get_file_hook(file_hash, file_name):
     print("Get file hook - file hash {}".format(file_hash))
-    # thread = Thread(target=get_file, args=(file_hash, file_name), daemon=True)
-    # thread.start()
     worker = UIWorker(get_file, file_hash, file_name)
     worker.signals.result.connect(get_file_ui_handler)
     worker.signals.error.connect(error_handler)
@@ -174,8 +172,8 @@ def download_progress_ui_handler(progress):
 
 
 # handles the ui elements for finishting a download
-def download_ui_handler(_download_result):
-    show_popup("Download Complete!", "{} finished downloading.".format(model.current_file_name))
+def download_ui_handler(download_result):
+    show_popup("Download Complete!", "{} finished downloading.".format(download_result["name"]))
     # hide container
     ui.download_container.setEnabled(False)
     ui.download_container.setVisible(False)
@@ -274,7 +272,6 @@ def seeding_hook(checked):
 
 # Handle the seeder listen event
 def seeding_listen_ui_handler():
-    show_popup("Seeding Started", "Successfully started seeding")
     ui.actionSeeding.setChecked(True)
     return
 
@@ -289,7 +286,6 @@ def seeding_error_handler(error_msg):
 
 # Handle the seeder shutting down
 def seeding_shutdown_ui_handler():
-    show_popup("Seeding Stopped", "Stopped seeding")
     ui.actionSeeding.setChecked(False)
     model.seeder_thread = None
     return
