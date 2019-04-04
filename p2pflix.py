@@ -395,6 +395,8 @@ def sync_hook():
 # handles pressing cancel button
 def sync_cancel_hook():
     sync_dialogue.hide()
+    refresh_hook()
+    peer_status_hook()
     sync_reset()
 
 
