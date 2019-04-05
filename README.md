@@ -28,6 +28,10 @@ tests, put everything needed in the `tests` directory.
 
 ## Running
 
-To run the peer program, use `pipenv run ./peer.py <command> <options>`. For help
+### CLI mode
+To run the peer in CLI mode program, use `pipenv run ./peer.py <command> <options>`. For help
 documentation, check `pipenv run ./peer.py -- --help` or `pipenv run ./peer.py <command>
 -- --help`
+
+### GUI mode
+To run the peer in GUI mode, use `pipenv run ./p2pflix.py`.
